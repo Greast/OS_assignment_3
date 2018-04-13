@@ -1,8 +1,8 @@
-cmd_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o := gcc -Wp,-MD,/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/.dm510_dev.o.d  -nostdinc -isystem /usr/lib/gcc/x86_64-linux-gnu/5/include -I./arch/um/include -I./arch/um/include/generated  -I./include -I./arch/um/include/uapi -I./arch/um/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/kconfig.h -D__KERNEL__ -m64 -I./arch/x86/um -I./arch/x86/include -I./arch/x86/include/uapi -I./arch/x86/include/generated -I./arch/x86/include/generated/uapi -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -fshort-wchar -Werror-implicit-function-declaration -Wno-format-security -std=gnu89 -fno-PIE -mcmodel=large -fno-builtin -m64 -funit-at-a-time -D__arch_um__ -I./arch/um/include/shared -I./arch/x86/um/shared -I./arch/um/include/shared/skas -Dvmap=kernel_vmap -Dlongjmp=kernel_longjmp -Dsetjmp=kernel_setjmp -Din6addr_loopback=kernel_in6addr_loopback -Din6addr_any=kernel_in6addr_any -Dstrrchr=kernel_strrchr -D_LARGEFILE64_SOURCE -Derrno=kernel_errno -Dsigprocmask=kernel_sigprocmask -Dmktime=kernel_mktime -fno-delete-null-pointer-checks -Os -Wno-maybe-uninitialized --param=allow-store-data-races=0 -DCC_HAVE_ASM_GOTO -Wframe-larger-than=1024 -fno-stack-protector -Wno-unused-but-set-variable -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-var-tracking-assignments -g -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init  -DMODULE  -DKBUILD_BASENAME='"dm510_dev"'  -DKBUILD_MODNAME='"dm510_dev"' -c -o /home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o /home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.c
+cmd_/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o := gcc -Wp,-MD,/home/jonas/Documents/University/DM510/Assignments/Third/src/.dm510_dev.o.d  -nostdinc -isystem /usr/lib/gcc/x86_64-linux-gnu/5/include -I./arch/um/include -I./arch/um/include/generated  -I./include -I./arch/um/include/uapi -I./arch/um/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/kconfig.h -D__KERNEL__ -m64 -I./arch/x86/um -I./arch/x86/include -I./arch/x86/include/uapi -I./arch/x86/include/generated -I./arch/x86/include/generated/uapi -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -fshort-wchar -Werror-implicit-function-declaration -Wno-format-security -std=gnu89 -fno-PIE -mcmodel=large -fno-builtin -m64 -funit-at-a-time -D__arch_um__ -I./arch/um/include/shared -I./arch/x86/um/shared -I./arch/um/include/shared/skas -Dvmap=kernel_vmap -Dlongjmp=kernel_longjmp -Dsetjmp=kernel_setjmp -Din6addr_loopback=kernel_in6addr_loopback -Din6addr_any=kernel_in6addr_any -Dstrrchr=kernel_strrchr -D_LARGEFILE64_SOURCE -Derrno=kernel_errno -Dsigprocmask=kernel_sigprocmask -Dmktime=kernel_mktime -fno-delete-null-pointer-checks -Os -Wno-maybe-uninitialized --param=allow-store-data-races=0 -DCC_HAVE_ASM_GOTO -Wframe-larger-than=1024 -fno-stack-protector -Wno-unused-but-set-variable -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-var-tracking-assignments -g -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -Werror=date-time  -DMODULE  -DKBUILD_BASENAME='"dm510_dev"'  -DKBUILD_MODNAME='"dm510_dev"' -c -o /home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o /home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.c
 
-source_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o := /home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.c
+source_/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o := /home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.c
 
-deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o := \
+deps_/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o := \
   include/linux/module.h \
     $(wildcard include/config/modules.h) \
     $(wildcard include/config/sysfs.h) \
@@ -419,95 +419,6 @@ deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/
   include/linux/kmemleak.h \
   include/linux/vmalloc.h \
   include/linux/kasan.h \
-  include/linux/fs.h \
-    $(wildcard include/config/fs/posix/acl.h) \
-    $(wildcard include/config/security.h) \
-    $(wildcard include/config/cgroup/writeback.h) \
-    $(wildcard include/config/ima.h) \
-    $(wildcard include/config/fsnotify.h) \
-    $(wildcard include/config/fs/encryption.h) \
-    $(wildcard include/config/epoll.h) \
-    $(wildcard include/config/file/locking.h) \
-    $(wildcard include/config/quota.h) \
-    $(wildcard include/config/fs/dax.h) \
-    $(wildcard include/config/block.h) \
-    $(wildcard include/config/mandatory/file/locking.h) \
-    $(wildcard include/config/migration.h) \
-  include/linux/wait_bit.h \
-  include/linux/kdev_t.h \
-  include/uapi/linux/kdev_t.h \
-  include/linux/dcache.h \
-  include/linux/rculist.h \
-  include/linux/rculist_bl.h \
-  include/linux/list_bl.h \
-  include/linux/bit_spinlock.h \
-  include/linux/lockref.h \
-    $(wildcard include/config/arch/use/cmpxchg/lockref.h) \
-  include/linux/stringhash.h \
-    $(wildcard include/config/dcache/word/access.h) \
-  include/linux/hash.h \
-    $(wildcard include/config/have/arch/hash.h) \
-  include/linux/path.h \
-  include/linux/list_lru.h \
-  include/linux/shrinker.h \
-  include/linux/pid.h \
-  include/linux/mm_types.h \
-    $(wildcard include/config/have/cmpxchg/double.h) \
-    $(wildcard include/config/have/aligned/struct/page.h) \
-    $(wildcard include/config/userfaultfd.h) \
-    $(wildcard include/config/have/arch/compat/mmap/bases.h) \
-    $(wildcard include/config/membarrier.h) \
-    $(wildcard include/config/aio.h) \
-    $(wildcard include/config/mmu/notifier.h) \
-    $(wildcard include/config/arch/want/batched/unmap/tlb/flush.h) \
-    $(wildcard include/config/hmm.h) \
-  include/linux/mm_types_task.h \
-    $(wildcard include/config/split/ptlock/cpus.h) \
-    $(wildcard include/config/arch/enable/split/pmd/ptlock.h) \
-  include/linux/auxvec.h \
-  include/uapi/linux/auxvec.h \
-  arch/x86/include/uapi/asm/auxvec.h \
-    $(wildcard include/config/ia32/emulation.h) \
-  include/linux/completion.h \
-  include/linux/uprobes.h \
-    $(wildcard include/config/uprobes.h) \
-  arch/um/include/asm/mmu.h \
-  arch/um/include/shared/skas/mm_id.h \
-  arch/x86/um/asm/mm_context.h \
-  arch/x86/include/uapi/asm/ldt.h \
-  include/linux/capability.h \
-  include/uapi/linux/capability.h \
-  include/linux/semaphore.h \
-  include/linux/fcntl.h \
-  include/uapi/linux/fcntl.h \
-  arch/x86/include/uapi/asm/fcntl.h \
-  include/uapi/asm-generic/fcntl.h \
-  include/uapi/linux/fiemap.h \
-  include/linux/migrate_mode.h \
-  include/linux/percpu-rwsem.h \
-  include/linux/rcuwait.h \
-  include/linux/rcu_sync.h \
-  include/linux/delayed_call.h \
-  include/linux/uuid.h \
-  include/uapi/linux/uuid.h \
-  include/linux/errseq.h \
-  include/uapi/linux/fs.h \
-  include/uapi/linux/limits.h \
-  include/uapi/linux/ioctl.h \
-  arch/x86/include/uapi/asm/ioctl.h \
-  include/asm-generic/ioctl.h \
-  include/uapi/asm-generic/ioctl.h \
-  include/linux/quota.h \
-    $(wildcard include/config/quota/netlink/interface.h) \
-  include/linux/percpu_counter.h \
-  include/uapi/linux/dqblk_xfs.h \
-  include/linux/dqblk_v1.h \
-  include/linux/dqblk_v2.h \
-  include/linux/dqblk_qtree.h \
-  include/linux/projid.h \
-  include/uapi/linux/quota.h \
-  include/linux/nfs_fs_i.h \
-  include/linux/uaccess.h \
   include/linux/sched.h \
     $(wildcard include/config/virt/cpu/accounting/native.h) \
     $(wildcard include/config/sched/info.h) \
@@ -527,6 +438,7 @@ deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/
     $(wildcard include/config/auditsyscall.h) \
     $(wildcard include/config/rt/mutexes.h) \
     $(wildcard include/config/ubsan.h) \
+    $(wildcard include/config/block.h) \
     $(wildcard include/config/task/xacct.h) \
     $(wildcard include/config/cpusets.h) \
     $(wildcard include/config/intel/rdt.h) \
@@ -537,9 +449,13 @@ deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/
     $(wildcard include/config/latencytop.h) \
     $(wildcard include/config/function/graph/tracer.h) \
     $(wildcard include/config/kcov.h) \
+    $(wildcard include/config/uprobes.h) \
     $(wildcard include/config/bcache.h) \
     $(wildcard include/config/vmap/stack.h) \
+    $(wildcard include/config/security.h) \
   include/uapi/linux/sched.h \
+  include/linux/pid.h \
+  include/linux/rculist.h \
   include/linux/sem.h \
   include/uapi/linux/sem.h \
   include/linux/ipc.h \
@@ -596,16 +512,155 @@ deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/
   arch/x86/include/uapi/asm/sigcontext.h \
   arch/x86/include/uapi/asm/siginfo.h \
   include/uapi/asm-generic/siginfo.h \
+  include/linux/mm_types_task.h \
+    $(wildcard include/config/arch/want/batched/unmap/tlb/flush.h) \
+    $(wildcard include/config/split/ptlock/cpus.h) \
+    $(wildcard include/config/arch/enable/split/pmd/ptlock.h) \
   include/linux/task_io_accounting.h \
     $(wildcard include/config/task/io/accounting.h) \
+  include/linux/fs.h \
+    $(wildcard include/config/fs/posix/acl.h) \
+    $(wildcard include/config/cgroup/writeback.h) \
+    $(wildcard include/config/ima.h) \
+    $(wildcard include/config/fsnotify.h) \
+    $(wildcard include/config/fs/encryption.h) \
+    $(wildcard include/config/epoll.h) \
+    $(wildcard include/config/file/locking.h) \
+    $(wildcard include/config/quota.h) \
+    $(wildcard include/config/fs/dax.h) \
+    $(wildcard include/config/mandatory/file/locking.h) \
+    $(wildcard include/config/migration.h) \
+  include/linux/wait_bit.h \
+  include/linux/kdev_t.h \
+  include/uapi/linux/kdev_t.h \
+  include/linux/dcache.h \
+  include/linux/rculist_bl.h \
+  include/linux/list_bl.h \
+  include/linux/bit_spinlock.h \
+  include/linux/lockref.h \
+    $(wildcard include/config/arch/use/cmpxchg/lockref.h) \
+  include/linux/stringhash.h \
+    $(wildcard include/config/dcache/word/access.h) \
+  include/linux/hash.h \
+    $(wildcard include/config/have/arch/hash.h) \
+  include/linux/path.h \
+  include/linux/list_lru.h \
+  include/linux/shrinker.h \
+  include/linux/mm_types.h \
+    $(wildcard include/config/have/cmpxchg/double.h) \
+    $(wildcard include/config/have/aligned/struct/page.h) \
+    $(wildcard include/config/userfaultfd.h) \
+    $(wildcard include/config/have/arch/compat/mmap/bases.h) \
+    $(wildcard include/config/membarrier.h) \
+    $(wildcard include/config/aio.h) \
+    $(wildcard include/config/mmu/notifier.h) \
+    $(wildcard include/config/hmm.h) \
+  include/linux/auxvec.h \
+  include/uapi/linux/auxvec.h \
+  arch/x86/include/uapi/asm/auxvec.h \
+    $(wildcard include/config/ia32/emulation.h) \
+  include/linux/completion.h \
+  include/linux/uprobes.h \
+  arch/um/include/asm/mmu.h \
+  arch/um/include/shared/skas/mm_id.h \
+  arch/x86/um/asm/mm_context.h \
+  arch/x86/include/uapi/asm/ldt.h \
+  include/linux/capability.h \
+  include/uapi/linux/capability.h \
+  include/linux/semaphore.h \
+  include/linux/fcntl.h \
+  include/uapi/linux/fcntl.h \
+  arch/x86/include/uapi/asm/fcntl.h \
+  include/uapi/asm-generic/fcntl.h \
+  include/uapi/linux/fiemap.h \
+  include/linux/migrate_mode.h \
+  include/linux/percpu-rwsem.h \
+  include/linux/rcuwait.h \
+  include/linux/rcu_sync.h \
+  include/linux/delayed_call.h \
+  include/linux/uuid.h \
+  include/uapi/linux/uuid.h \
+  include/linux/errseq.h \
+  include/uapi/linux/fs.h \
+  include/uapi/linux/limits.h \
+  include/uapi/linux/ioctl.h \
+  arch/x86/include/uapi/asm/ioctl.h \
+  include/asm-generic/ioctl.h \
+  include/uapi/asm-generic/ioctl.h \
+  include/linux/quota.h \
+    $(wildcard include/config/quota/netlink/interface.h) \
+  include/linux/percpu_counter.h \
+  include/uapi/linux/dqblk_xfs.h \
+  include/linux/dqblk_v1.h \
+  include/linux/dqblk_v2.h \
+  include/linux/dqblk_qtree.h \
+  include/linux/projid.h \
+  include/uapi/linux/quota.h \
+  include/linux/nfs_fs_i.h \
+  include/linux/proc_fs.h \
+    $(wildcard include/config/proc/fs.h) \
+  include/linux/poll.h \
+  include/linux/uaccess.h \
   include/linux/kasan-checks.h \
   arch/um/include/asm/uaccess.h \
   include/asm-generic/uaccess.h \
   arch/um/include/generated/asm/extable.h \
   include/asm-generic/extable.h \
+  include/uapi/linux/poll.h \
+  arch/x86/include/uapi/asm/poll.h \
+  include/uapi/asm-generic/poll.h \
+  include/linux/cdev.h \
+  include/linux/device.h \
+    $(wildcard include/config/debug/devres.h) \
+    $(wildcard include/config/generic/msi/irq/domain.h) \
+    $(wildcard include/config/pinctrl.h) \
+    $(wildcard include/config/generic/msi/irq.h) \
+    $(wildcard include/config/dma/cma.h) \
+    $(wildcard include/config/of.h) \
+    $(wildcard include/config/devtmpfs.h) \
+    $(wildcard include/config/sysfs/deprecated.h) \
+  include/linux/ioport.h \
+  include/linux/klist.h \
+  include/linux/pinctrl/devinfo.h \
+    $(wildcard include/config/pm.h) \
+  include/linux/pm.h \
+    $(wildcard include/config/vt/console/sleep.h) \
+    $(wildcard include/config/pm/clk.h) \
+    $(wildcard include/config/pm/generic/domains.h) \
+  include/linux/ratelimit.h \
+  arch/um/include/generated/asm/device.h \
+  include/asm-generic/device.h \
+  include/linux/pm_wakeup.h \
+  include/linux/seq_file.h \
+  include/linux/cred.h \
+    $(wildcard include/config/debug/credentials.h) \
+    $(wildcard include/config/keys.h) \
+  include/linux/key.h \
+  include/linux/assoc_array.h \
+    $(wildcard include/config/associative/array.h) \
+  include/linux/selinux.h \
+    $(wildcard include/config/security/selinux.h) \
+  include/linux/sched/user.h \
+    $(wildcard include/config/fanotify.h) \
+    $(wildcard include/config/posix/mqueue.h) \
+    $(wildcard include/config/bpf/syscall.h) \
+    $(wildcard include/config/net.h) \
+  include/linux/sched/signal.h \
+    $(wildcard include/config/sched/autogroup.h) \
+    $(wildcard include/config/bsd/process/acct.h) \
+    $(wildcard include/config/taskstats.h) \
+    $(wildcard include/config/audit.h) \
+    $(wildcard include/config/stack/growsup.h) \
+  include/linux/signal.h \
+  include/linux/sched/jobctl.h \
+  include/linux/sched/task.h \
+    $(wildcard include/config/have/copy/thread/tls.h) \
+    $(wildcard include/config/have/exit/thread.h) \
+    $(wildcard include/config/arch/wants/dynamic/task/struct.h) \
   arch/um/include/generated/asm/switch_to.h \
   include/asm-generic/switch_to.h \
+  /home/jonas/Documents/University/DM510/Assignments/Third/src/buffer.h \
 
-/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o: $(deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o)
+/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o: $(deps_/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o)
 
-$(deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o):
+$(deps_/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o):
