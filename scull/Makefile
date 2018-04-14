@@ -21,7 +21,7 @@ obj-m	:= scull.o
 
 else
 
-ROOT = ../..
+ROOT = ..
 KERNELDIR = ${ROOT}/linux-4.15
 #KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 PWD       := $(shell pwd)

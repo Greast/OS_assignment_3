@@ -6,7 +6,6 @@
 #  define MODULE
 #endif
 
-
 	#include <linux/module.h>
 	#include <linux/moduleparam.h>
 
@@ -23,7 +22,6 @@
 	#include <linux/seq_file.h>
 	#include <linux/sched/signal.h>
 	#include <linux/uaccess.h>	/* copy_*_user */
-
 
 #include <linux/module.h>
 #include <linux/init.h>
@@ -67,20 +65,45 @@ static struct file_operations dm510_fops = {
 	.release = dm510_release,
   .unlocked_ioctl  = dm510_ioctl
 };
-#define PAGE 1000
 
 struct frame {
 	wait_queue_head_t inq, outq;       /* read and write queues */
-	struct buffer buf;
+	struct buffer * read_buffer;
+	struct buffer * write_buffer;
 	int nreaders, nwriters;            /* number of openings for r/w */
 	struct fasync_struct *async_queue; /* asynchronous readers */
 	struct mutex mutex;              /* mutual exclusion semaphore */
-	struct cdev device;
+	struct cdev cdev;
 };
 
+static struct frame devices[DEVICE_COUNT];
+static struct buffer buffers[2];
+static dev_t global_device;
 
-/* called when module is loaded */
+static int frame_device_setup(struct frame * dev, dev_t device){
+	cdev_init(&dev->cdev, &dm510_fops);
+	dev->cdev.owner = THIS_MODULE;
+	return cdev_add(&dev->cdev, device, 1);
+};
+
 int dm510_init_module( void ) {
+	int i, result;
+	size_t size;
+	global_device = MAJOR_NUMBER;
+	result = register_chrdev_region(global_device,DEVICE_COUNT,DEVICE_NAME);
+	if(!result){
+		printk(KERN_NOTICE "Unable to get device region, error %d\n", result);
+		return 0;
+	}
+	for ( i = 0; i < DEVICE_COUNT; i++) {
+		init_waitqueue_head(&devices[i].inq);
+		init_waitqueue_head(&devices[i].outq);
+		mutex_init(&devices[i].mutex);
+		size = sizeof(buffers) / sizeof(*buffers);
+		devices[i].read_buffer = buffers + (i % size);
+		devices[i].write_buffer = buffers + ((i + 1) % size);
+		frame_device_setup(devices+i, global_device+i );
+	}
 
 	printk(KERN_INFO "DM510: Hello, faggot, from your device!\n");
 	return 0;
