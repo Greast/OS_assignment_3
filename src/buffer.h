@@ -6,11 +6,31 @@ struct buffer{
   struct mutex mutex;
 };
 
+void buffer_init(struct buffer * buf, size_t size){
+	buf->size = size;
+  buf->rp = buf->wp = buf->buffer = kmalloc(buf->size * sizeof(*buf->buffer), GFP_KERNEL);
+
+}
+
 struct buffer * buffer(size_t size){
   struct buffer * buf = kmalloc(sizeof(*buf), GFP_KERNEL);
-  buf->size = size;
-  buf->rp = buf->wp = buf->buffer = kmalloc(buf->size * sizeof(*buf->buffer), GFP_KERNEL);
+  buffer_init(buf,size);
   return buf;
+}
+
+int buffer_resize(struct buffer * buf, size_t size){
+	char *new_buffer = krealloc(buf->buffer, size, GFP_KERNEL);
+	if(!new_buffer) return -1;
+	buf->rp = buf->wp = buf->buffer = new_buffer,
+	buf->size = size;
+	return 0;
+}
+
+int buffer_free(struct buffer * buf){
+	int result;
+	result = buffer_resize(buf,0);
+	buf->buffer = NULL;
+	return result;
 }
 
 size_t buffer_write_space(struct buffer * buf){

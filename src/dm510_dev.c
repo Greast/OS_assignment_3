@@ -54,6 +54,7 @@ long dm510_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 #define MAX_MINOR_NUMBER 1
 
 #define DEVICE_COUNT 2
+#define BUFFER_COUNT 2
 /* end of what really should have been in a .h file */
 
 /* file operations struct */
@@ -77,7 +78,7 @@ struct frame {
 };
 
 static struct frame devices[DEVICE_COUNT];
-static struct buffer buffers[2];
+static struct buffer buffers[BUFFER_COUNT];
 static dev_t global_device;
 
 static int frame_device_setup(struct frame * dev, dev_t device){
@@ -86,22 +87,25 @@ static int frame_device_setup(struct frame * dev, dev_t device){
 	return cdev_add(&dev->cdev, device, 1);
 };
 
+#define BUFFER_DEFAULT_SIZE 2048
+
 int dm510_init_module( void ) {
 	int i, result;
-	size_t size;
 	global_device = MAJOR_NUMBER;
 	result = register_chrdev_region(global_device,DEVICE_COUNT,DEVICE_NAME);
-	if(!result){
+	if(result){
 		printk(KERN_NOTICE "Unable to get device region, error %d\n", result);
 		return 0;
+	}
+	for (i = 0; i < BUFFER_COUNT; i++) {
+		buffer_init(buffers+i,BUFFER_DEFAULT_SIZE);
 	}
 	for ( i = 0; i < DEVICE_COUNT; i++) {
 		init_waitqueue_head(&devices[i].inq);
 		init_waitqueue_head(&devices[i].outq);
 		mutex_init(&devices[i].mutex);
-		size = sizeof(buffers) / sizeof(*buffers);
-		devices[i].read_buffer = buffers + (i % size);
-		devices[i].write_buffer = buffers + ((i + 1) % size);
+		devices[i].read_buffer = buffers + (i % BUFFER_COUNT);
+		devices[i].write_buffer = buffers + ((i + 1) % BUFFER_COUNT);
 		frame_device_setup(devices+i, global_device+i );
 	}
 
@@ -111,9 +115,14 @@ int dm510_init_module( void ) {
 
 /* Called when module is unloaded */
 void dm510_cleanup_module( void ) {
-
-
-	/* clean up code belongs here */
+	int i;
+	for(i = 0; i < DEVICE_COUNT ; i++){
+		//if(devices[i]) cdev_del(&devices[i].cdev);
+	}
+	for(i = 0; i < BUFFER_COUNT ; i++){
+		buffer_free(buffers+i);
+	}
+	unregister_chrdev_region(global_device,DEVICE_COUNT);
 
 	printk(KERN_INFO "DM510: Module unloaded, you faggot.\n");
 }
@@ -121,20 +130,41 @@ void dm510_cleanup_module( void ) {
 
 /* Called when a process tries to open the device file */
 static int dm510_open( struct inode *inode, struct file *filp ) {
+	struct frame * dev;
+	dev = container_of(inode->i_cdev, struct frame, cdev);
+	filp->private_data = dev;
+	if(mutex_lock_interruptible(&dev->mutex))
+		return -ERESTARTSYS;
+
+	if (filp->f_mode & FMODE_READ)
+		dev->nreaders++;
+	if (filp->f_mode & FMODE_WRITE)
+		dev->nwriters++;
+	mutex_unlock(&dev->mutex);
+
 
 	printk(KERN_INFO "open.\n");
 	/* device claiming code belongs here */
 
-	return 0;
+	return nonseekable_open(inode, filp);
 }
 
 
 /* Called when a process closes the device file. */
 static int dm510_release( struct inode *inode, struct file *filp ) {
-
+	struct frame * dev = filp->private_data;
+	mutex_lock(&dev->mutex);
+	if (filp->f_mode & FMODE_READ)
+		dev->nreaders--;
+	if (filp->f_mode & FMODE_WRITE)
+		dev->nwriters--;
+	if (dev->nreaders + dev->nwriters == 0) {
+		buffer_free(dev->write_buffer);
+		buffer_free(dev->read_buffer);
+	}
+	mutex_unlock(&dev->mutex);
 	printk(KERN_INFO "release.\n");
 	/* device release code belongs here */
-
 	return 0;
 }
 
@@ -145,7 +175,24 @@ static ssize_t dm510_read( struct file *filp,
     size_t count,   /* The max number of bytes to read  */
     loff_t *f_pos )  /* The offset in the file           */
 {
-	return 0; //return number of bytes read
+	struct frame * dev = filp->private_data;
+
+	if (mutex_lock_interruptible(&dev->mutex))
+		return -ERESTARTSYS;
+
+	while (count > buffer_write_space(dev->read_buffer)) {
+		mutex_unlock(&dev->mutex); /* release the lock */
+		if (filp->f_flags & O_NONBLOCK)
+			return -EAGAIN;
+		if (wait_event_interruptible(dev->inq, (count > buffer_write_space(dev->read_buffer))))
+			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+		if (mutex_lock_interruptible(&dev->mutex))
+			return -ERESTARTSYS;
+	}
+	count = buffer_read(dev->read_buffer,buf,count);
+	mutex_unlock (&dev->mutex);
+	wake_up_interruptible(&dev->outq);
+	return count;
 }
 
 
@@ -156,7 +203,24 @@ static ssize_t dm510_write( struct file *filp,
     loff_t *f_pos )  /* The offset in the file           */
 {
 
-	return 0; //return number of bytes written
+	struct frame * dev = filp->private_data;
+
+	if (mutex_lock_interruptible(&dev->mutex))
+		return -ERESTARTSYS;
+
+	while (count > buffer_write_space(dev->write_buffer)) {
+		mutex_unlock(&dev->mutex); /* release the lock */
+		if (filp->f_flags & O_NONBLOCK)
+			return -EAGAIN;
+		if (wait_event_interruptible(dev->inq, (count > buffer_write_space(dev->write_buffer))))
+			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+		if (mutex_lock_interruptible(&dev->mutex))
+			return -ERESTARTSYS;
+	}
+	count = buffer_write(dev->write_buffer,buf,count);
+	mutex_unlock (&dev->mutex);
+	wake_up_interruptible(&dev->outq);
+	return count;
 }
 
 /* called by system call icotl */
