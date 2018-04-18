@@ -80,7 +80,12 @@ struct frame {
 
 static struct frame devices[DEVICE_COUNT];
 static struct buffer buffers[BUFFER_COUNT];
+static size_t max_processes = 10;
+
 dev_t global_device = MKDEV(MAJOR_NUMBER,MIN_MINOR_NUMBER);
+
+
+
 
 static int frame_device_setup(struct frame * dev, dev_t device){
 	cdev_init(&dev->cdev, &dm510_fops);
@@ -227,6 +232,12 @@ static ssize_t dm510_write( struct file *filp,
 	return count;
 }
 
+
+#define GET_BUFFER_SIZE 0
+#define SET_BUFFER_SIZE 1
+#define GET_MAX_NR_PROC 2
+#define SET_MAX_NR_PROC 3
+
 /* called by system call icotl */
 long dm510_ioctl(
     struct file *filp,
@@ -234,13 +245,20 @@ long dm510_ioctl(
     unsigned long arg ) /* argument of the command */
 {
 	switch(cmd){
-		case SCULL_P_IOCQSIZE:
+		case GET_BUFFER_SIZE:
 		return buffers->size;
 
-		case SCULL_P_IOCTSIZE:{
+		case SET_BUFFER_SIZE:{
 			int i;
 			for(i = 0 ; i < BUFFER_COUNT ; i++) buffer_resize(buffers+i,arg);
 		}
+		break;
+
+		case GET_MAX_NR_PROC:
+		return max_processes;
+
+		case SET_MAX_NR_PROC:
+		max_processes = arg;
 		break;
 	}
 
