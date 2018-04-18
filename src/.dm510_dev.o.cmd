@@ -660,6 +660,7 @@ deps_/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o :=
   arch/um/include/generated/asm/switch_to.h \
   include/asm-generic/switch_to.h \
   /home/jonas/Documents/University/DM510/Assignments/Third/src/buffer.h \
+  /home/jonas/Documents/University/DM510/Assignments/Third/src/scull.h \
 
 /home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o: $(deps_/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o)
 

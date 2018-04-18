@@ -5,19 +5,7 @@ struct buffer{
 	char *rp, *wp;
   struct mutex mutex;
 };
-
-void buffer_init(struct buffer * buf, size_t size){
-	buf->size = size;
-  buf->rp = buf->wp = buf->buffer = kmalloc(buf->size * sizeof(*buf->buffer), GFP_KERNEL);
-
-}
-
-struct buffer * buffer(size_t size){
-  struct buffer * buf = kmalloc(sizeof(*buf), GFP_KERNEL);
-  buffer_init(buf,size);
-  return buf;
-}
-
+//In accordance with IOCTL declaraion section 1, the buffer shall support scaleing.
 int buffer_resize(struct buffer * buf, size_t size){
 	char *new_buffer = krealloc(buf->buffer, size, GFP_KERNEL);
 	if(!new_buffer) return -1;
@@ -26,10 +14,20 @@ int buffer_resize(struct buffer * buf, size_t size){
 	return 0;
 }
 
+int buffer_init(struct buffer * buf, size_t size){
+	buf->buffer = NULL;
+	return buffer_resize(buf,size);
+}
+
+struct buffer * buffer(size_t size){
+  struct buffer * buf = kmalloc(sizeof(*buf), GFP_KERNEL);
+  buffer_init(buf,size);
+  return buf;
+}
+
 int buffer_free(struct buffer * buf){
 	int result;
 	result = buffer_resize(buf,0);
-	buf->buffer = NULL;
 	return result;
 }
 
@@ -48,7 +46,10 @@ size_t buffer_io(struct buffer * buf, const char * seq, size_t size, unsigned lo
     mutex_unlock (&buf->mutex);
     return size;
 
-  } else {
+  } else if(buf->rp == buf->wp){
+		mutex_unlock (&buf->mutex);
+		return 0;
+	} else {
 
     const size_t a = (buf->buffer + buf->size) - buf->rp, b = buf->rp - buf->buffer - 1;
 

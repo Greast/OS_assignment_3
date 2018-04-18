@@ -31,6 +31,7 @@
 #include <linux/errno.h>
 #include <linux/types.h>
 #include <linux/wait.h>
+
 /* #include <asm/uaccess.h> */
 #include <linux/uaccess.h>
 #include <linux/semaphore.h>
@@ -39,7 +40,7 @@
 /* Prototypes - this would normally go in a .h file */
 
 #include "buffer.h"
-
+#include "scull.h"
 
 
 static int dm510_open( struct inode*, struct file* );
@@ -116,7 +117,7 @@ int dm510_init_module( void ) {
 void dm510_cleanup_module( void ) {
 	int i;
 	for(i = 0; i < DEVICE_COUNT ; i++){
-		//if(devices[i]) cdev_del(&devices[i].cdev);
+		if(devices[i].write_buffer) cdev_del(&devices[i].cdev);
 	}
 	for(i = 0; i < BUFFER_COUNT ; i++){
 		buffer_free(buffers+i);
@@ -174,12 +175,14 @@ static ssize_t dm510_read( struct file *filp,
     size_t count,   /* The max number of bytes to read  */
     loff_t *f_pos )  /* The offset in the file           */
 {
+	printk(KERN_INFO "read.\n");
 	struct frame * dev = filp->private_data;
 
 	if (mutex_lock_interruptible(&dev->mutex))
 		return -ERESTARTSYS;
 
-	while (count > buffer_write_space(dev->read_buffer)) {
+	if (count > buffer_write_space(dev->read_buffer)) {
+		printk(KERN_INFO "loop.\n");
 		mutex_unlock(&dev->mutex); /* release the lock */
 		if (filp->f_flags & O_NONBLOCK)
 			return -EAGAIN;
@@ -188,9 +191,11 @@ static ssize_t dm510_read( struct file *filp,
 		if (mutex_lock_interruptible(&dev->mutex))
 			return -ERESTARTSYS;
 	}
+	printk(KERN_INFO "copy.\n");
 	count = buffer_read(dev->read_buffer,buf,count);
 	mutex_unlock (&dev->mutex);
 	wake_up_interruptible(&dev->outq);
+	printk(KERN_INFO "bytes : %lu .\n", count);
 	return count;
 }
 
@@ -228,6 +233,18 @@ long dm510_ioctl(
     unsigned int cmd,   /* command passed from the user */
     unsigned long arg ) /* argument of the command */
 {
+	switch(cmd){
+		case SCULL_P_IOCQSIZE:
+		return buffers->size;
+
+		case SCULL_P_IOCTSIZE:{
+			int i;
+			for(i = 0 ; i < BUFFER_COUNT ; i++) buffer_resize(buffers+i,arg);
+		}
+		break;
+	}
+
+
 	/* ioctl code belongs here */
 	printk(KERN_INFO "DM510: ioctl called.\n");
 
