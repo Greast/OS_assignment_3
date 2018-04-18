@@ -79,7 +79,7 @@ struct frame {
 
 static struct frame devices[DEVICE_COUNT];
 static struct buffer buffers[BUFFER_COUNT];
-static dev_t global_device;
+dev_t global_device = MKDEV(MAJOR_NUMBER,MIN_MINOR_NUMBER);
 
 static int frame_device_setup(struct frame * dev, dev_t device){
 	cdev_init(&dev->cdev, &dm510_fops);
@@ -91,7 +91,6 @@ static int frame_device_setup(struct frame * dev, dev_t device){
 
 int dm510_init_module( void ) {
 	int i, result;
-	global_device = MAJOR_NUMBER;
 	result = register_chrdev_region(global_device,DEVICE_COUNT,DEVICE_NAME);
 	if(result){
 		printk(KERN_NOTICE "Unable to get device region, error %d\n", result);
