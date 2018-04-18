@@ -103,7 +103,8 @@ int dm510_init_module( void ) {
 		return 0;
 	}
 	for (i = 0; i < BUFFER_COUNT; i++) {
-		buffer_init(buffers+i,BUFFER_DEFAULT_SIZE);
+		result = buffer_init(buffers+i,BUFFER_DEFAULT_SIZE);
+		if(result < 0) return result;
 	}
 	for ( i = 0; i < DEVICE_COUNT; i++) {
 		init_waitqueue_head(&devices[i].inq);
@@ -125,7 +126,7 @@ void dm510_cleanup_module( void ) {
 		if(devices[i].write_buffer) cdev_del(&devices[i].cdev);
 	}
 	for(i = 0; i < BUFFER_COUNT ; i++){
-		buffer_free(buffers+i);
+		if(buffers[i].buffer) buffer_free(buffers+i);
 	}
 	unregister_chrdev_region(global_device,DEVICE_COUNT);
 
@@ -142,7 +143,11 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 		return -ERESTARTSYS;
 
 	if (filp->f_mode & FMODE_READ)
-		dev->nreaders++;
+		if(dev->nreaders >= max_processes ){
+			return -ENOMEM;
+		} else{
+			dev->nreaders++;
+		}
 	if (filp->f_mode & FMODE_WRITE)
 		dev->nwriters++;
 	mutex_unlock(&dev->mutex);
@@ -159,9 +164,9 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 static int dm510_release( struct inode *inode, struct file *filp ) {
 	struct frame * dev = filp->private_data;
 	mutex_lock(&dev->mutex);
-	if (filp->f_mode & FMODE_READ)
+	if (filp->f_mode & FMODE_READ && dev->nreaders)
 		dev->nreaders--;
-	if (filp->f_mode & FMODE_WRITE)
+	if (filp->f_mode & FMODE_WRITE && dev->nwriters)
 		dev->nwriters--;
 	if (dev->nreaders + dev->nwriters == 0) {
 		buffer_free(dev->write_buffer);
@@ -186,7 +191,10 @@ static ssize_t dm510_read( struct file *filp,
 	if (mutex_lock_interruptible(&dev->mutex))
 		return -ERESTARTSYS;
 
-	if (count > buffer_write_space(dev->read_buffer)) {
+	if (count > buffers->size)
+		return -ENOMEM;
+
+	while (count > buffer_write_space(dev->read_buffer)) {
 		printk(KERN_INFO "loop.\n");
 		mutex_unlock(&dev->mutex); /* release the lock */
 		if (filp->f_flags & O_NONBLOCK)
@@ -216,6 +224,9 @@ static ssize_t dm510_write( struct file *filp,
 
 	if (mutex_lock_interruptible(&dev->mutex))
 		return -ERESTARTSYS;
+
+	if (count > buffer->size)
+		return -ENOMEM;
 
 	while (count > buffer_write_space(dev->write_buffer)) {
 		mutex_unlock(&dev->mutex); /* release the lock */

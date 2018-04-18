@@ -1,4 +1,5 @@
 #include <linux/slab.h>
+#include <linux/errno.h>
 struct buffer{
 	char *buffer;
   size_t size;
@@ -8,7 +9,7 @@ struct buffer{
 //In accordance with IOCTL declaraion section 1, the buffer shall support scaleing.
 int buffer_resize(struct buffer * buf, size_t size){
 	char *new_buffer = krealloc(buf->buffer, size, GFP_KERNEL);
-	if(!new_buffer) return -1;
+	if(!new_buffer && size) return -ENOMEM;
 	buf->rp = buf->wp = buf->buffer = new_buffer,
 	buf->size = size;
 	return 0;
