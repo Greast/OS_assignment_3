@@ -6,42 +6,15 @@
 #  define MODULE
 #endif
 
-	#include <linux/module.h>
-	#include <linux/moduleparam.h>
-
-	#include <linux/kernel.h>	/* printk(), min() */
-	#include <linux/slab.h>		/* kmalloc() */
-	#include <linux/sched.h>
-	#include <linux/fs.h>		/* everything... */
-	#include <linux/proc_fs.h>
-	#include <linux/errno.h>	/* error codes */
-	#include <linux/types.h>	/* size_t */
-	#include <linux/fcntl.h>
-	#include <linux/poll.h>
-	#include <linux/cdev.h>
-	#include <linux/seq_file.h>
-	#include <linux/sched/signal.h>
-	#include <linux/uaccess.h>	/* copy_*_user */
-
+#include <linux/cdev.h>
 #include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/wait.h>
-
-/* #include <asm/uaccess.h> */
 #include <linux/uaccess.h>
-#include <linux/semaphore.h>
-/* #include <asm/system.h> */
-#include <asm/switch_to.h>
 /* Prototypes - this would normally go in a .h file */
 
+//own header file for buffer, to make code readable
 #include "buffer.h"
-#include "scull.h"
-
 
 static int dm510_open( struct inode*, struct file* );
 static int dm510_release( struct inode*, struct file* );
@@ -225,7 +198,7 @@ static ssize_t dm510_write( struct file *filp,
 	if (mutex_lock_interruptible(&dev->mutex))
 		return -ERESTARTSYS;
 
-	if (count > buffer->size)
+	if (count > buffers->size)
 		return -ENOMEM;
 
 	while (count > buffer_write_space(dev->write_buffer)) {
