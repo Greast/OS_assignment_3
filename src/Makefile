@@ -3,8 +3,8 @@
 #
 
 # Change this if you keep your files elsewhere
-ROOT = ../..
-KERNELDIR = ${ROOT}/dm510/linux-4.15
+ROOT = ..
+KERNELDIR = ${ROOT}/linux-4.15
 PWD = $(shell pwd)
 
 

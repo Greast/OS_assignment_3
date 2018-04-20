@@ -1,3 +1,3 @@
-/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.ko
-/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o
+/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.ko
+/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o
 

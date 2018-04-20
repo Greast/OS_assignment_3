@@ -6,6 +6,7 @@
 #  define MODULE
 #endif
 
+#define DEBUG
 #include <linux/cdev.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
