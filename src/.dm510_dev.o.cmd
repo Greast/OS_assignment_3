@@ -626,6 +626,7 @@ deps_/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o :=
   include/linux/kmemleak.h \
   include/linux/vmalloc.h \
   include/linux/kasan.h \
+  /home/jonas/Documents/University/DM510/Assignments/Third/src/debug.h \
 
 /home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o: $(deps_/home/jonas/Documents/University/DM510/Assignments/Third/src/dm510_dev.o)
 

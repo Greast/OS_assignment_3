@@ -15,8 +15,8 @@ int main(int argc, char const *argv[]) {
   write(dev1,hello,strlen(hello));
 
   char world[20];
-  ssize_t a = read(dev2,world,strlen(hello));
+  ssize_t a = read(dev2,world,20);
 
-  printf("%li : %c\n",a, *world);
+  printf("%li : %s\n",a, world);
   return 0;
 }

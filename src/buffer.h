@@ -1,5 +1,9 @@
+#ifndef DM510_BUFFER_H
+#define DM510_BUFFER_H
+
 #include <linux/slab.h>
 #include <linux/errno.h>
+#include "debug.h"
 
 struct buffer{
 	char *buffer;
@@ -51,8 +55,8 @@ size_t buffer_write(struct buffer * buf, const char * seq, size_t size){
 	//printk(KERN_INFO "size = %lu\n" , size );
 	size_t new_size;
 	mutex_lock(&buf->mutex);
+	dprintf("(%lu).wp : %lu" , buf, buf->wp - buf->buffer);
 	if(buf->wp < buf->rp){
-
 		new_size = min((size_t)(buf->wp - buf->rp) - 1, size);
     copy_from_user(buf->wp,seq,new_size);
     buf->wp += new_size;
@@ -60,31 +64,28 @@ size_t buffer_write(struct buffer * buf, const char * seq, size_t size){
 	}else{
 		const size_t a = (buf->buffer + buf->size) - buf->wp;
 		const size_t b = (buf->rp - buf->buffer) % buf->size;
-		//printk(KERN_INFO "a = %lu, b = %lu\n" , a , b);
 
 		new_size = min(a,size);
-		//printk(KERN_INFO "new_size = %lu",new_size);
 		copy_from_user(buf->wp,seq,new_size);
 		size -= new_size;
-		//printk(KERN_INFO "size' = %lu\n" , size );
 		if(0 < size){
-			printk(KERN_INFO "hello\n");
 			new_size = min(b,size);
 			buf->wp = buf->buffer;
 			copy_from_user(buf->wp,seq,new_size - 1);
 		}
-
 		buf->wp += new_size;
 	}
+	dprintf("-> %lu\n" , buf->wp - buf->buffer);
 	mutex_unlock (&buf->mutex);
 	return new_size;
 }
 size_t buffer_read(struct buffer * buf, const char * seq, size_t size){
 	size_t new_size = 0;
 	mutex_lock(&buf->mutex);
+	dprintf("(%lu).rp : %lu" , buf, buf->rp - buf->buffer);
 	if(buf->rp < buf->wp){
 		new_size = min((size_t)(buf->wp - buf->rp), size);
-		copy_to_user(buf->rp,seq,new_size);
+		copy_to_user(seq,buf->rp,new_size);
 		buf->rp += new_size;
 
 	} else {
@@ -92,16 +93,18 @@ size_t buffer_read(struct buffer * buf, const char * seq, size_t size){
 		const size_t b = buf->rp - buf->buffer;
 
 		new_size = min(a,size);
-		copy_to_user(buf->wp,seq,new_size);
+		copy_to_user(seq,buf->rp,new_size);
 		size -= new_size;
 		if(0 < size){
 			new_size = min(b,new_size);
 			buf->rp = buf->buffer;
-			copy_to_user(buf->rp,seq,new_size);
+			copy_to_user(seq,buf->rp,new_size);
 		}
 		buf->rp += new_size;
 
 	}
+	dprintf("-> %lu\n" , buf->rp - buf->buffer);
 	mutex_unlock (&buf->mutex);
 	return new_size;
 }
+#endif /* end of include guard: DM510_BUFFER_H */

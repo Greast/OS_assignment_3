@@ -58,9 +58,6 @@ static size_t max_processes = 10;
 
 dev_t global_device = MKDEV(MAJOR_NUMBER,MIN_MINOR_NUMBER);
 
-
-
-
 static int frame_device_setup(struct frame * dev, dev_t device){
 	cdev_init(&dev->cdev, &dm510_fops);
 	dev->cdev.owner = THIS_MODULE;
@@ -73,7 +70,7 @@ int dm510_init_module( void ) {
 	int i, result;
 	result = register_chrdev_region(global_device,DEVICE_COUNT,DEVICE_NAME);
 	if(result){
-		printk(KERN_NOTICE "Unable to get device region, error %d\n", result);
+		//printk(KERN_NOTICE "Unable to get device region, error %d\n", result);
 		return 0;
 	}
 	for (i = 0; i < BUFFER_COUNT; i++) {
@@ -89,7 +86,7 @@ int dm510_init_module( void ) {
 		frame_device_setup(devices+i, global_device+i );
 	}
 
-	printk(KERN_INFO "DM510: Hello, faggot, from your device!\n");
+	//printk(KERN_INFO "DM510: Hello, faggot, from your device!\n");
 	return 0;
 }
 
@@ -104,13 +101,14 @@ void dm510_cleanup_module( void ) {
 	}
 	unregister_chrdev_region(global_device,DEVICE_COUNT);
 
-	printk(KERN_INFO "DM510: Module unloaded, you faggot.\n");
+	//printk(KERN_INFO "DM510: Module unloaded, you faggot.\n");
 }
 
 
 /* Called when a process tries to open the device file */
 static int dm510_open( struct inode *inode, struct file *filp ) {
 	struct frame * dev;
+	dprintf("Open");
 	dev = container_of(inode->i_cdev, struct frame, cdev);
 	filp->private_data = dev;
 	if(mutex_lock_interruptible(&dev->mutex))
@@ -118,6 +116,8 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 
 	if (filp->f_mode & FMODE_READ)
 		if(dev->nreaders >= max_processes ){
+			dprintf("Error (%d)" -ENOMEM);
+			mutex_unlock(&dev->mutex);
 			return -ENOMEM;
 		} else{
 			dev->nreaders++;
@@ -127,7 +127,7 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 	mutex_unlock(&dev->mutex);
 
 
-	printk(KERN_INFO "open.\n");
+	//printk(KERN_INFO "open.\n");
 	/* device claiming code belongs here */
 
 	return nonseekable_open(inode, filp);
@@ -137,17 +137,14 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 /* Called when a process closes the device file. */
 static int dm510_release( struct inode *inode, struct file *filp ) {
 	struct frame * dev = filp->private_data;
+	dprintf("Release");
 	mutex_lock(&dev->mutex);
 	if (filp->f_mode & FMODE_READ && dev->nreaders)
 		dev->nreaders--;
 	if (filp->f_mode & FMODE_WRITE && dev->nwriters)
 		dev->nwriters--;
-	if (dev->nreaders + dev->nwriters == 0) {
-		buffer_free(dev->write_buffer);
-		buffer_free(dev->read_buffer);
-	}
 	mutex_unlock(&dev->mutex);
-	printk(KERN_INFO "release.\n");
+	//sprintk(KERN_INFO "release.\n");
 	/* device release code belongs here */
 	return 0;
 }
@@ -159,30 +156,42 @@ static ssize_t dm510_read( struct file *filp,
     size_t count,   /* The max number of bytes to read  */
     loff_t *f_pos )  /* The offset in the file           */
 {
-	printk(KERN_INFO "read.\n");
+
 	struct frame * dev = filp->private_data;
+	dprintf("Read");
+	if (mutex_lock_interruptible(&dev->mutex)){
+		dprintf("Error (%d)" -ERESTARTSYS);
+		return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+	}
 
-	if (mutex_lock_interruptible(&dev->mutex))
-		return -ERESTARTSYS;
-
-	if (count > buffers->size)
+	if (count > buffers->size){
+		dprintf("Error (%i) : %lu <= %lu | %lu.", -ENOMEM, count,buffers->size, dev->write_buffer->size);
+		mutex_unlock(&dev->mutex);
 		return -ENOMEM;
+	}
 
 	while (count > buffer_write_space(dev->read_buffer)) {
-		printk(KERN_INFO "loop.\n");
+		//printk(KERN_INFO "loop.\n");
 		mutex_unlock(&dev->mutex); /* release the lock */
-		if (filp->f_flags & O_NONBLOCK)
+		if (filp->f_flags & O_NONBLOCK){
+			dprintf("Error (%d) : Non Blocking." -ERESTARTSYS);
 			return -EAGAIN;
-		if (wait_event_interruptible(dev->inq, (count > buffer_write_space(dev->read_buffer))))
+		}
+		if (wait_event_interruptible(dev->inq, (count > buffer_write_space(dev->read_buffer)))){
+			dprintf("Error (%d)" -ERESTARTSYS);
 			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
-		if (mutex_lock_interruptible(&dev->mutex))
-			return -ERESTARTSYS;
+		}
+		if (mutex_lock_interruptible(&dev->mutex)){
+			dprintf("Error (%d)" -ERESTARTSYS);
+			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+		}
 	}
-	printk(KERN_INFO "copy.\n");
+	//printk(KERN_INFO "copy.\n");
 	count = buffer_read(dev->read_buffer,buf,count);
+	dprintf("(%lu).size : %lu",dev->read_buffer ,dev->read_buffer->size);
 	mutex_unlock (&dev->mutex);
 	wake_up_interruptible(&dev->outq);
-	printk(KERN_INFO "bytes : %lu .\n", count);
+	//printk(KERN_INFO "bytes : %lu .\n", count);
 	return count;
 }
 
@@ -195,25 +204,41 @@ static ssize_t dm510_write( struct file *filp,
 {
 
 	struct frame * dev = filp->private_data;
-
-	if (mutex_lock_interruptible(&dev->mutex))
+	dprintf("fp = (%lu)",dev->write_buffer);
+	if (mutex_lock_interruptible(&dev->mutex)){
+		dprintf("Error : %d" -ERESTARTSYS);
 		return -ERESTARTSYS;
+	}
 
-	if (count > buffers->size)
+
+	if (count > buffers->size){
+		dprintf("Error (%i) : %lu <= %lu | %lu.", -ENOMEM, count,buffers->size, dev->write_buffer->size);
+		mutex_unlock(&dev->mutex);
 		return -ENOMEM;
+	}
+
 
 	while (count > buffer_write_space(dev->write_buffer)) {
 		mutex_unlock(&dev->mutex); /* release the lock */
-		if (filp->f_flags & O_NONBLOCK)
+		if (filp->f_flags & O_NONBLOCK){
+			dprintf("Error (%d) : Non Blocking." -EAGAIN);
 			return -EAGAIN;
-		if (wait_event_interruptible(dev->inq, (count > buffer_write_space(dev->write_buffer))))
+		}
+
+		if (wait_event_interruptible(dev->outq, (count > buffer_write_space(dev->write_buffer)))){
+			dprintf("Error (%d)" -ERESTARTSYS);
 			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
-		if (mutex_lock_interruptible(&dev->mutex))
-			return -ERESTARTSYS;
+		}
+
+		if (mutex_lock_interruptible(&dev->mutex)){
+			dprintf("Error (%d)" -ERESTARTSYS);
+			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+		}
+
 	}
 	count = buffer_write(dev->write_buffer,buf,count);
 	mutex_unlock (&dev->mutex);
-	wake_up_interruptible(&dev->outq);
+	wake_up_interruptible(&dev->inq);
 	return count;
 }
 
@@ -249,7 +274,7 @@ long dm510_ioctl(
 
 
 	/* ioctl code belongs here */
-	printk(KERN_INFO "DM510: ioctl called.\n");
+	//printk(KERN_INFO "DM510: ioctl called.\n");
 
 	return 0; //has to be changed
 }
