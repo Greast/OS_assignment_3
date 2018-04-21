@@ -160,22 +160,18 @@ static ssize_t dm510_read( struct file *filp,
 	struct frame * dev = filp->private_data;
 	dprintf("Read");
 	if (mutex_lock_interruptible(&dev->mutex)){
-		dprintf("Error (%d)" -ERESTARTSYS);
-		return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+		return rerror(-ERESTARTSYS);
 	}
 
 	if (count > buffers->size){
-		dprintf("Error (%i) : %lu <= %lu | %lu.", -ENOMEM, count,buffers->size, dev->write_buffer->size);
 		mutex_unlock(&dev->mutex);
-		return -ENOMEM;
+		return rerror(-ENOMEM, "%lu <= %lu | %lu.", count,buffers->size, dev->write_buffer->size);
 	}
 
 	while (count > buffer_write_space(dev->read_buffer)) {
-		//printk(KERN_INFO "loop.\n");
 		mutex_unlock(&dev->mutex); /* release the lock */
 		if (filp->f_flags & O_NONBLOCK){
-			dprintf("Error (%d) : Non Blocking." -ERESTARTSYS);
-			return -EAGAIN;
+			return rerror(-EAGAIN,"Non Blocking.");
 		}
 		if (wait_event_interruptible(dev->inq, (count > buffer_write_space(dev->read_buffer)))){
 			dprintf("Error (%d)" -ERESTARTSYS);
