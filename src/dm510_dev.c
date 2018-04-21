@@ -126,10 +126,6 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 		dev->nwriters++;
 	mutex_unlock(&dev->mutex);
 
-
-	//printk(KERN_INFO "open.\n");
-	/* device claiming code belongs here */
-
 	return nonseekable_open(inode, filp);
 }
 
@@ -138,6 +134,7 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 static int dm510_release( struct inode *inode, struct file *filp ) {
 	struct frame * dev = filp->private_data;
 	dprintf("Release");
+	scull_p_fasync(-1, filp, 0);
 	mutex_lock(&dev->mutex);
 	if (filp->f_mode & FMODE_READ && dev->nreaders)
 		dev->nreaders--;
@@ -156,38 +153,30 @@ static ssize_t dm510_read( struct file *filp,
     size_t count,   /* The max number of bytes to read  */
     loff_t *f_pos )  /* The offset in the file           */
 {
-
 	struct frame * dev = filp->private_data;
-	dprintf("Read");
-	if (mutex_lock_interruptible(&dev->mutex)){
+	char **rp = &dev->read_buffer->rp;
+	char **wp = &dev->write_buffer->wp;
+
+	if (mutex_lock_interruptible(&dev->mutex))
 		return rerror(-ERESTARTSYS);
-	}
 
-	if (count > buffers->size){
-		mutex_unlock(&dev->mutex);
-		return rerror(-ENOMEM, "%lu <= %lu | %lu.", count,buffers->size, dev->write_buffer->size);
-	}
-
-	while (count > buffer_write_space(dev->read_buffer)) {
+	while (*rp == *wp) {
 		mutex_unlock(&dev->mutex);
 		if (filp->f_flags & O_NONBLOCK){
-			return rerror(-EAGAIN,"Non Blocking.");
+			return rerror(-EAGAIN);
 		}
-		if (wait_event_interruptible(dev->inq, (count > buffer_write_space(dev->read_buffer)))){
-			return rerror(-ERESTARTSYS);
+		if(wait_event_interruptible(dev->inq,(*rp != *wp))){
+			return rerror(-EAGAIN);
 		}
-		if (mutex_lock_interruptible(&dev->mutex)){
-			return rerror(-ERESTARTSYS);
+		if(mutex_lock_interruptible(&dev->mutex)){
+			return rerror(-ERESTARTSYS)
 		}
 	}
-	count = buffer_read(dev->read_buffer,buf,count);
-	dprintf("(%lu).size : %lu",dev->read_buffer ,dev->read_buffer->size);
+	count = buffer_read(dev,bug,count);
 	mutex_unlock (&dev->mutex);
 	wake_up_interruptible(&dev->outq);
-
 	return count;
 }
-
 
 /* Called when a process writes to dev file */
 static ssize_t dm510_write( struct file *filp,
@@ -195,31 +184,35 @@ static ssize_t dm510_write( struct file *filp,
     size_t count,   /* The max number of bytes to write */
     loff_t *f_pos )  /* The offset in the file           */
 {
-
 	struct frame * dev = filp->private_data;
-
-	if (mutex_lock_interruptible(&dev->mutex)){
+	char **rp = &dev->read_buffer->rp;
+	char **wp = &dev->write_buffer->wp;
+	if (mutex_lock_interruptible(&dev->mutex))
 		return rerror(-ERESTARTSYS);
+
+	if(count > buffers->size){
+		return rerror(-EMSGSIZE);
 	}
-	if (count > buffers->size){
-		mutex_unlock(&dev->mutex);
-		return rerror(-ENOMEM,"%lu <= %lu | %lu.", count, buffers->size, dev->write_buffer->size);
-	}
-	while (count > buffer_write_space(dev->write_buffer)) {
+
+	while (buffer_write_space(dev->write_buffer) < count) {
+		DEFINE_WAIT(wait);
+
 		mutex_unlock(&dev->mutex);
 		if (filp->f_flags & O_NONBLOCK){
-			return rerror(-EAGAIN, "Non Blocking.");
+			return rerror(-EAGAIN);
 		}
-		if (wait_event_interruptible(dev->outq, (count > buffer_write_space(dev->write_buffer)))){
+		prepare_to_wait(&dev->outq, &wait, TASK_INTERRUPTIBLE);
+		if (buffer_write_space(dev->write_buffer) < count){
+			schedule();
+		}
+		finish_wait(&dev->outq, &wait);
+
+		if (mutex_lock_interruptible(&dev->mutex))
 			return rerror(-ERESTARTSYS);
-		}
-		if (mutex_lock_interruptible(&dev->mutex)){
-			return rerror(-ERESTARTSYS);
-		}
 	}
-	count = buffer_write(dev->write_buffer,buf,count);
-	mutex_unlock (&dev->mutex);
-	wake_up_interruptible(&dev->inq);
+	count = buffer_write(dev,buf,count);
+	if(dev->async_queue)
+		kill_fasync(&dev->async_queue, SIGIO, POLL_IN);
 	return count;
 }
 
@@ -241,7 +234,14 @@ long dm510_ioctl(
 
 		case SET_BUFFER_SIZE:{
 			int i;
-			for(i = 0 ; i < BUFFER_COUNT ; i++) buffer_resize(buffers+i,arg);
+			for(i = 0 ; i < BUFFER_COUNT ; i++){
+				if(buffer_write_space(buffers+i) < size) {
+					return error(-EINVAL);
+				}
+			}
+			for(i = 0 ; i < BUFFER_COUNT ; i++) {
+				buffer_resize(buffers+i,arg);
+			}
 		}
 		break;
 

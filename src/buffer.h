@@ -14,33 +14,65 @@ struct buffer{
 
 //In accordance with IOCTL declaraion section 1, the buffer shall support scaleing.
 int buffer_resize(struct buffer * head, size_t size){
-	char *new_buffer = krealloc(head->buffer, size, GFP_KERNEL);
-	if(!new_buffer && size) return -ENOMEM;
-	head->rp = head->wp = head->buffer = new_buffer,
-	head->size = size;
+	void * pointer;
+	size_t size;
+	DEBUG_CODE(if(buffer_write_space(head) < size) return error(-EINVAL););
+
+	pointer = kmalloc(size*sizeof(*head->buffer),GFP_KERNEL);
+
+	if(!pointer) return rerror(-ENOMEM);
+	if(head-> wp == head-> rp){
+		head->wp = head->rp = pointer;
+
+	} else if(head-> wp > head-> rp){
+		size = head->wp - head->rp;
+		memcpy(pointer,head->rp,size);
+		head->wp = pointer + size;
+		head->rp = pointer;
+
+	} else {
+		size = (head->buffer + head->size) - head->rp;
+		memcpy(pointer,head->rp,size);
+		head->rp = pointer;
+		memcpy(head->rp + size, head->buffer, head->wp - head->buffer);
+		head->wp = (head->rp + size) + (head->wp - head->buffer);
+
+	}
+	head->buffer = pointer;
+	kfree(head->buffer);
 	return 0;
 }
 
-
 // initialise a new buffer of given size.
 int buffer_init(struct buffer * head, size_t size){
-	head->buffer = NULL;
-	return buffer_resize(head,size);
+	void * pointer;
+	DEBUG_CODE(if(head->buffer) dprintf("To prevent memory leaks, the buffer pointer should be NULL."););
+
+	pointer = kmalloc(size * sizeof(*head->buffer),GFP_KERNEL);
+
+	if(!pointer) return rerror(-ENOMEM);
+
+	head->buffer = pointer;
+
+	return 0;
 }
 
 // allocate memory for buffer
 struct buffer * buffer(size_t size){
   struct buffer * head = kmalloc(sizeof(*head), GFP_KERNEL);
-  buffer_init(head,size);
+  if(head) {
+		buffer_init(head,size);
+		if(!head->buffer) return NULL;
+	}
   return head;
 }
 
 // free buffer by resizing to zero. This is possible because if
 // krealloc's new_size is 0 and p is not a NULL pointer, the object pointed to is freed.
 int buffer_free(struct buffer * head){
-	int result;
-	result = buffer_resize(head,0);
-	return result;
+	kfree(head->buffer);
+	head->buffer = NULL;
+	return 0;
 }
 
 // return how much space we can write to. If read- and write-pointer is at same spot -> it means
@@ -52,7 +84,6 @@ size_t buffer_write_space(struct buffer * head){
 }
 
 size_t buffer_write(struct buffer * buf, const char * seq, size_t size){
-	//printk(KERN_INFO "size = %lu\n" , size );
 	size_t new_size;
 	mutex_lock(&buf->mutex);
 	dprintf("(%lu).wp : %lu" , buf, buf->wp - buf->buffer);
