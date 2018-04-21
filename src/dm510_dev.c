@@ -169,25 +169,22 @@ static ssize_t dm510_read( struct file *filp,
 	}
 
 	while (count > buffer_write_space(dev->read_buffer)) {
-		mutex_unlock(&dev->mutex); /* release the lock */
+		mutex_unlock(&dev->mutex);
 		if (filp->f_flags & O_NONBLOCK){
 			return rerror(-EAGAIN,"Non Blocking.");
 		}
 		if (wait_event_interruptible(dev->inq, (count > buffer_write_space(dev->read_buffer)))){
-			dprintf("Error (%d)" -ERESTARTSYS);
-			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+			return rerror(-ERESTARTSYS);
 		}
 		if (mutex_lock_interruptible(&dev->mutex)){
-			dprintf("Error (%d)" -ERESTARTSYS);
-			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+			return rerror(-ERESTARTSYS);
 		}
 	}
-	//printk(KERN_INFO "copy.\n");
 	count = buffer_read(dev->read_buffer,buf,count);
 	dprintf("(%lu).size : %lu",dev->read_buffer ,dev->read_buffer->size);
 	mutex_unlock (&dev->mutex);
 	wake_up_interruptible(&dev->outq);
-	//printk(KERN_INFO "bytes : %lu .\n", count);
+
 	return count;
 }
 
@@ -200,37 +197,25 @@ static ssize_t dm510_write( struct file *filp,
 {
 
 	struct frame * dev = filp->private_data;
-	dprintf("fp = (%lu)",dev->write_buffer);
+
 	if (mutex_lock_interruptible(&dev->mutex)){
-		dprintf("Error : %d" -ERESTARTSYS);
-		return -ERESTARTSYS;
+		return rerror(-ERESTARTSYS);
 	}
-
-
 	if (count > buffers->size){
-		dprintf("Error (%i) : %lu <= %lu | %lu.", -ENOMEM, count,buffers->size, dev->write_buffer->size);
 		mutex_unlock(&dev->mutex);
-		return -ENOMEM;
+		return rerror(-ENOMEM,"%lu <= %lu | %lu.", count, buffers->size, dev->write_buffer->size);
 	}
-
-
 	while (count > buffer_write_space(dev->write_buffer)) {
-		mutex_unlock(&dev->mutex); /* release the lock */
+		mutex_unlock(&dev->mutex);
 		if (filp->f_flags & O_NONBLOCK){
-			dprintf("Error (%d) : Non Blocking." -EAGAIN);
-			return -EAGAIN;
+			return rerror(-EAGAIN, "Non Blocking.");
 		}
-
 		if (wait_event_interruptible(dev->outq, (count > buffer_write_space(dev->write_buffer)))){
-			dprintf("Error (%d)" -ERESTARTSYS);
-			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+			return rerror(-ERESTARTSYS);
 		}
-
 		if (mutex_lock_interruptible(&dev->mutex)){
-			dprintf("Error (%d)" -ERESTARTSYS);
-			return -ERESTARTSYS; /* signal: tell the fs layer to handle it */
+			return rerror(-ERESTARTSYS);
 		}
-
 	}
 	count = buffer_write(dev->write_buffer,buf,count);
 	mutex_unlock (&dev->mutex);
