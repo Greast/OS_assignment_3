@@ -14,7 +14,7 @@ int main(int argc, char const *argv[]) {
   int read_pointer = open("/dev/dm510-0", O_RDONLY);
   const int error_val = ioctl(read_pointer, SET_BUFFER_SIZE, (int) strtol(argv[1], NULL, 10));
 
-  if(error_val < 0) printf("Cant resize because too much information inside buffer.%s\n", );
+  if(error_val < 0) printf("Cant resize because too much information inside buffer.\n");
 //  printf("Error (%d)\n",error_val );
 
   return 0;

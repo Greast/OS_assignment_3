@@ -70,11 +70,11 @@ int dm510_init_module( void ) {
 	int i, result;
 	result = register_chrdev_region(global_device,DEVICE_COUNT,DEVICE_NAME);
 	if(result){
-		return rerror(result);
+		return rerror(result, ".");
 	}
 	for (i = 0; i < BUFFER_COUNT; i++) {
 		result = buffer_init(buffers+i,BUFFER_DEFAULT_SIZE);
-		if(result < 0) return rerror(result);
+		if(result < 0) return rerror(result, ".");
 	}
 	for ( i = 0; i < DEVICE_COUNT; i++) {
 		init_waitqueue_head(&devices[i].inq);
@@ -112,7 +112,7 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 	dev = container_of(inode->i_cdev, struct frame, cdev);
 	filp->private_data = dev;
 	if(mutex_lock_interruptible(&dev->mutex)){
-		return rerror(-ERESTARTSYS);
+		return rerror(-ERESTARTSYS, "Mutex lock was interrupted.");
 	}
 
 	if (filp->f_mode & FMODE_READ){
@@ -174,15 +174,15 @@ static ssize_t dm510_read( struct file *filp,
 	while (*rp == *wp) {
 		mutex_unlock(&dev->mutex);
 		if (filp->f_flags & O_NONBLOCK){
-			return rerror(-EAGAIN, ".");
+			return rerror(-EAGAIN, "File-pointer could not be blocked.");
 		}
 		dprintf("Read Sleeping.");
 		if(wait_event_interruptible(dev->inq,(*rp != *wp))){
-			return rerror(-EAGAIN, ".");
+			return rerror(-EAGAIN, "Reader was interrupted while sleeping.");
 		}
 		dprintf("Reader Awoken.");
 		if(mutex_lock_interruptible(&dev->mutex)){
-			return rerror(-ERESTARTSYS, ".");
+			return rerror(-ERESTARTSYS, "Mutex lock was interrupted by outside source.");
 		}
 	}
 	count = buffer_read(dev->read_buffer,buf,count);
@@ -204,10 +204,10 @@ static ssize_t dm510_write( struct file *filp,
 	dev->write_buffer->wp - dev->write_buffer->buffer,
 	dev->write_buffer->rp - dev->write_buffer->buffer);
 	if (mutex_lock_interruptible(&dev->mutex))
-		return rerror(-ERESTARTSYS);
+		return rerror(-ERESTARTSYS, "Mutex lock was interrupted by outside source.");
 
 	if(count > buffers->size){
-		return rerror(-EMSGSIZE);
+		return rerror(-EMSGSIZE, "Message exceeded the size of the buffer.");
 	}
 
 	while (buffer_write_space(dev->write_buffer) < count) {
@@ -215,20 +215,15 @@ static ssize_t dm510_write( struct file *filp,
 
 		mutex_unlock(&dev->mutex);
 		if (filp->f_flags & O_NONBLOCK){
-			return rerror(-EAGAIN);
+			return rerror(-EAGAIN, "File-pointer could not be blocked.");
 		}
 		if(wait_event_interruptible(dev->outq,
 			(buffer_write_space(dev->write_buffer) >= count))){
-			return rerror(-EAGAIN);
+			return rerror(-EAGAIN, "Writer was interrupted while sleeping.");
 		}
-		/*prepare_to_wait(&dev->outq, &wait, TASK_INTERRUPTIBLE);
-		if (buffer_write_space(dev->write_buffer) < count){
-			schedule();
-		}
-		finish_wait(&dev->outq, &wait);*/
 
 		if (mutex_lock_interruptible(&dev->mutex))
-			return rerror(-ERESTARTSYS);
+			return rerror(-ERESTARTSYS, "Mutex lock was interrupted by outside source.");
 	}
 	count = buffer_write(dev->write_buffer,(char*)buf,count);
 	dprintf("Write : Waking Reader. | wp = %d, rp = %d" ,
@@ -265,7 +260,7 @@ long dm510_ioctl(
 			int i;
 			for(i = 0 ; i < BUFFER_COUNT ; i++){
 				if(buffer_write_space(buffers+i) < arg) {
-					return rerror(-EINVAL);
+					return rerror(-EINVAL, "Buffer(%d) has %lu amount of free space, cannot be reduced to size %lu.", i, buffer_write_space(buffers+i), arg);
 				}
 			}
 			for(i = 0 ; i < BUFFER_COUNT ; i++) {
