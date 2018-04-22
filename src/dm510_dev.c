@@ -264,7 +264,7 @@ long dm510_ioctl(
 		case SET_BUFFER_SIZE:{
 			int i;
 			for(i = 0 ; i < BUFFER_COUNT ; i++){
-				if(buffer_write_space(buffers+i) < buffers->size) {
+				if(buffer_write_space(buffers+i) < arg) {
 					return rerror(-EINVAL);
 				}
 			}
