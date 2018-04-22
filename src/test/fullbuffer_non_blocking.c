@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/ioctl.h>
 #include "dm510_ioctl_commands.h"
 int main(int argc, char const *argv[]) {
   int write_pointer = open("/dev/dm510-0", O_RDWR | O_NONBLOCK);
