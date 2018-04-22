@@ -80,7 +80,7 @@ int dm510_init_module( void ) {
 		init_waitqueue_head(&devices[i].inq);
 		init_waitqueue_head(&devices[i].outq);
 		mutex_init(&devices[i].mutex);
-		dprintf("Device(%d) = (%lu,%lu)",i,buffers + (i % BUFFER_COUNT),buffers + ((i + 1) % BUFFER_COUNT));
+		dprintf("Device(%d) = (%d, %d)",i,(i % BUFFER_COUNT), ((i + 1) % BUFFER_COUNT));
 		devices[i].read_buffer = buffers + (i % BUFFER_COUNT);
 		devices[i].write_buffer = buffers + ((i + 1) % BUFFER_COUNT);
 		frame_device_setup(devices+i, global_device+i );

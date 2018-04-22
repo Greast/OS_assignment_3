@@ -1,8 +1,8 @@
-cmd_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o := gcc -Wp,-MD,/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/.dm510_dev.o.d  -nostdinc -isystem /usr/lib/gcc/x86_64-linux-gnu/5/include -I./arch/um/include -I./arch/um/include/generated  -I./include -I./arch/um/include/uapi -I./arch/um/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/kconfig.h -D__KERNEL__ -m64 -I./arch/x86/um -I./arch/x86/include -I./arch/x86/include/uapi -I./arch/x86/include/generated -I./arch/x86/include/generated/uapi -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -fshort-wchar -Werror-implicit-function-declaration -Wno-format-security -std=gnu89 -fno-PIE -mcmodel=large -fno-builtin -m64 -funit-at-a-time -D__arch_um__ -I./arch/um/include/shared -I./arch/x86/um/shared -I./arch/um/include/shared/skas -Dvmap=kernel_vmap -Dlongjmp=kernel_longjmp -Dsetjmp=kernel_setjmp -Din6addr_loopback=kernel_in6addr_loopback -Din6addr_any=kernel_in6addr_any -Dstrrchr=kernel_strrchr -D_LARGEFILE64_SOURCE -Derrno=kernel_errno -Dsigprocmask=kernel_sigprocmask -Dmktime=kernel_mktime -fno-delete-null-pointer-checks -Os -Wno-maybe-uninitialized --param=allow-store-data-races=0 -DCC_HAVE_ASM_GOTO -Wframe-larger-than=1024 -fno-stack-protector -Wno-unused-but-set-variable -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-var-tracking-assignments -g -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init  -DMODULE  -DKBUILD_BASENAME='"dm510_dev"'  -DKBUILD_MODNAME='"dm510_dev"' -c -o /home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o /home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.c
+cmd_/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o := gcc -Wp,-MD,/home/simjo16/Documents/OS_assignment_3/src/.dm510_dev.o.d  -nostdinc -isystem /usr/lib/gcc/x86_64-linux-gnu/5/include -I./arch/um/include -I./arch/um/include/generated  -I./include -I./arch/um/include/uapi -I./arch/um/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/kconfig.h -D__KERNEL__ -m64 -I./arch/x86/um -I./arch/x86/include -I./arch/x86/include/uapi -I./arch/x86/include/generated -I./arch/x86/include/generated/uapi -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -fshort-wchar -Werror-implicit-function-declaration -Wno-format-security -std=gnu89 -fno-PIE -mcmodel=large -fno-builtin -m64 -funit-at-a-time -D__arch_um__ -I./arch/um/include/shared -I./arch/x86/um/shared -I./arch/um/include/shared/skas -Dvmap=kernel_vmap -Dlongjmp=kernel_longjmp -Dsetjmp=kernel_setjmp -Din6addr_loopback=kernel_in6addr_loopback -Din6addr_any=kernel_in6addr_any -Dstrrchr=kernel_strrchr -D_LARGEFILE64_SOURCE -Derrno=kernel_errno -Dsigprocmask=kernel_sigprocmask -Dmktime=kernel_mktime -fno-delete-null-pointer-checks -Os -Wno-maybe-uninitialized --param=allow-store-data-races=0 -DCC_HAVE_ASM_GOTO -Wframe-larger-than=1024 -fno-stack-protector -Wno-unused-but-set-variable -fno-omit-frame-pointer -fno-optimize-sibling-calls -fno-var-tracking-assignments -g -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow -fno-stack-check -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init  -DMODULE  -DKBUILD_BASENAME='"dm510_dev"'  -DKBUILD_MODNAME='"dm510_dev"' -c -o /home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o /home/simjo16/Documents/OS_assignment_3/src/dm510_dev.c
 
-source_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o := /home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.c
+source_/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o := /home/simjo16/Documents/OS_assignment_3/src/dm510_dev.c
 
-deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o := \
+deps_/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o := \
   include/linux/cdev.h \
   include/linux/kobject.h \
     $(wildcard include/config/uevent/helper.h) \
@@ -616,7 +616,7 @@ deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/
   include/asm-generic/uaccess.h \
   arch/um/include/generated/asm/extable.h \
   include/asm-generic/extable.h \
-  /home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/buffer.h \
+  /home/simjo16/Documents/OS_assignment_3/src/buffer.h \
   include/linux/slab.h \
     $(wildcard include/config/debug/slab.h) \
     $(wildcard include/config/failslab.h) \
@@ -626,8 +626,8 @@ deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/
   include/linux/kmemleak.h \
   include/linux/vmalloc.h \
   include/linux/kasan.h \
-  /home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/debug.h \
+  /home/simjo16/Documents/OS_assignment_3/src/debug.h \
 
-/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o: $(deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o)
+/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o: $(deps_/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o)
 
-$(deps_/home/jegyl16/Desktop/fourth_semester/DM501-OS/assignments/OS_assignment_3/src/dm510_dev.o):
+$(deps_/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o):
