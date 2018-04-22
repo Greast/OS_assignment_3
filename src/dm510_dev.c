@@ -6,7 +6,7 @@
 #  define MODULE
 #endif
 
-//#define DEBUG
+#define DEBUG
 #include <linux/cdev.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -16,7 +16,6 @@
 
 //own header file for buffer, to make code readable
 #include "buffer.h"
-#include "dm510_ioctl_commands.h"
 
 static int dm510_open( struct inode*, struct file* );
 static int dm510_release( struct inode*, struct file* );
@@ -84,7 +83,6 @@ int dm510_init_module( void ) {
 		dprintf("Device(%d) = (%lu,%lu)",i,buffers + (i % BUFFER_COUNT),buffers + ((i + 1) % BUFFER_COUNT));
 		devices[i].read_buffer = buffers + (i % BUFFER_COUNT);
 		devices[i].write_buffer = buffers + ((i + 1) % BUFFER_COUNT);
-		printk("");
 		frame_device_setup(devices+i, global_device+i );
 	}
 
@@ -120,13 +118,19 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 	if (filp->f_mode & FMODE_READ){
 		if(dev->nreaders >= max_processes ){
 			mutex_unlock(&dev->mutex);
-			return rerror(-ENOMEM);
+			return rerror(-ERESTARTSYS, "Too many readers, only %d are allowed.", max_processes);
 		} else{
 			dev->nreaders++;
 		}
 	}
 	if (filp->f_mode & FMODE_WRITE){
-		dev->nwriters++;
+		if(dev->nwriters >= 1){
+			mutex_unlock(&dev->mutex);
+			return rerror(-ERESTARTSYS);
+		}else{
+			dev->nwriters++;
+		}
+
 	}
 	mutex_unlock(&dev->mutex);
 
@@ -206,17 +210,21 @@ static ssize_t dm510_write( struct file *filp,
 	}
 
 	while (buffer_write_space(dev->write_buffer) < count) {
-		DEFINE_WAIT(wait);
+		//DEFINE_WAIT(wait);
 
 		mutex_unlock(&dev->mutex);
 		if (filp->f_flags & O_NONBLOCK){
 			return rerror(-EAGAIN);
 		}
-		prepare_to_wait(&dev->outq, &wait, TASK_INTERRUPTIBLE);
+		if(wait_event_interruptible(dev->outq,
+			(buffer_write_space(dev->write_buffer) >= count))){
+			return rerror(-EAGAIN);
+		}
+		/*prepare_to_wait(&dev->outq, &wait, TASK_INTERRUPTIBLE);
 		if (buffer_write_space(dev->write_buffer) < count){
 			schedule();
 		}
-		finish_wait(&dev->outq, &wait);
+		finish_wait(&dev->outq, &wait);*/
 
 		if (mutex_lock_interruptible(&dev->mutex))
 			return rerror(-ERESTARTSYS);
@@ -229,11 +237,18 @@ static ssize_t dm510_write( struct file *filp,
 	for(i = 0 ; i < DEVICE_COUNT ; i++){
 			wake_up_interruptible(&devices[i].inq);
 	}
+	//wake_up_interruptible(&dev->inq);
 
 	mutex_unlock (&dev->mutex);
 	dprintf("Write : Done.");
 	return count;
 }
+
+
+#define GET_BUFFER_SIZE 0
+#define SET_BUFFER_SIZE 1
+#define GET_MAX_NR_PROC 2
+#define SET_MAX_NR_PROC 3
 
 /* called by system call icotl */
 long dm510_ioctl(
@@ -265,6 +280,7 @@ long dm510_ioctl(
 		max_processes = arg;
 		break;
 	}
+
 
 	return 0; //has to be changed
 }
