@@ -111,19 +111,21 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 	dprintf("Open");
 	dev = container_of(inode->i_cdev, struct frame, cdev);
 	filp->private_data = dev;
-	if(mutex_lock_interruptible(&dev->mutex))
-		return -ERESTARTSYS;
+	if(mutex_lock_interruptible(&dev->mutex)){
+		return rerror(-ERESTARTSYS);
+	}
 
-	if (filp->f_mode & FMODE_READ)
+	if (filp->f_mode & FMODE_READ){
 		if(dev->nreaders >= max_processes ){
-			dprintf("Error (%d)" -ENOMEM);
 			mutex_unlock(&dev->mutex);
-			return -ENOMEM;
+			return rerror(-ENOMEM);
 		} else{
 			dev->nreaders++;
 		}
-	if (filp->f_mode & FMODE_WRITE)
+	}
+	if (filp->f_mode & FMODE_WRITE){
 		dev->nwriters++;
+	}
 	mutex_unlock(&dev->mutex);
 
 	return nonseekable_open(inode, filp);
@@ -134,15 +136,14 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 static int dm510_release( struct inode *inode, struct file *filp ) {
 	struct frame * dev = filp->private_data;
 	dprintf("Release");
-	scull_p_fasync(-1, filp, 0);
+	//scull_p_fasync(-1, filp, 0);
 	mutex_lock(&dev->mutex);
 	if (filp->f_mode & FMODE_READ && dev->nreaders)
 		dev->nreaders--;
 	if (filp->f_mode & FMODE_WRITE && dev->nwriters)
 		dev->nwriters--;
 	mutex_unlock(&dev->mutex);
-	//sprintk(KERN_INFO "release.\n");
-	/* device release code belongs here */
+
 	return 0;
 }
 
@@ -169,10 +170,10 @@ static ssize_t dm510_read( struct file *filp,
 			return rerror(-EAGAIN);
 		}
 		if(mutex_lock_interruptible(&dev->mutex)){
-			return rerror(-ERESTARTSYS)
+			return rerror(-ERESTARTSYS);
 		}
 	}
-	count = buffer_read(dev,bug,count);
+	count = buffer_read(dev->read_buffer,buf,count);
 	mutex_unlock (&dev->mutex);
 	wake_up_interruptible(&dev->outq);
 	return count;
@@ -185,8 +186,6 @@ static ssize_t dm510_write( struct file *filp,
     loff_t *f_pos )  /* The offset in the file           */
 {
 	struct frame * dev = filp->private_data;
-	char **rp = &dev->read_buffer->rp;
-	char **wp = &dev->write_buffer->wp;
 	if (mutex_lock_interruptible(&dev->mutex))
 		return rerror(-ERESTARTSYS);
 
@@ -210,9 +209,10 @@ static ssize_t dm510_write( struct file *filp,
 		if (mutex_lock_interruptible(&dev->mutex))
 			return rerror(-ERESTARTSYS);
 	}
-	count = buffer_write(dev,buf,count);
+	count = buffer_write(dev->write_buffer,(char*)buf,count);
 	if(dev->async_queue)
 		kill_fasync(&dev->async_queue, SIGIO, POLL_IN);
+	mutex_unlock (&dev->mutex);
 	return count;
 }
 
@@ -235,8 +235,8 @@ long dm510_ioctl(
 		case SET_BUFFER_SIZE:{
 			int i;
 			for(i = 0 ; i < BUFFER_COUNT ; i++){
-				if(buffer_write_space(buffers+i) < size) {
-					return error(-EINVAL);
+				if(buffer_write_space(buffers+i) < buffers->size) {
+					return rerror(-EINVAL);
 				}
 			}
 			for(i = 0 ; i < BUFFER_COUNT ; i++) {

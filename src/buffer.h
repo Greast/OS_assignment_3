@@ -12,11 +12,19 @@ struct buffer{
   struct mutex mutex;
 };
 
+// return how much space we can write to. If read- and write-pointer is at same spot -> it means
+// the whole buffer can be written to. Else, calculate the write-space between them.
+size_t buffer_write_space(struct buffer * head){
+  if (head->rp == head->wp)
+    return head->size - 1;
+  return ((head->rp + head->size - head->wp) % head->size) - 1;
+}
+
 //In accordance with IOCTL declaraion section 1, the buffer shall support scaleing.
 int buffer_resize(struct buffer * head, size_t size){
 	void * pointer;
-	size_t size;
-	DEBUG_CODE(if(buffer_write_space(head) < size) return error(-EINVAL););
+	mutex_lock(&head->mutex);
+	DEBUG_CODE(if(buffer_write_space(head) < size) return rerror(-EINVAL););
 
 	pointer = kmalloc(size*sizeof(*head->buffer),GFP_KERNEL);
 
@@ -40,6 +48,7 @@ int buffer_resize(struct buffer * head, size_t size){
 	}
 	head->buffer = pointer;
 	kfree(head->buffer);
+	mutex_unlock (&head->mutex);
 	return 0;
 }
 
@@ -52,7 +61,8 @@ int buffer_init(struct buffer * head, size_t size){
 
 	if(!pointer) return rerror(-ENOMEM);
 
-	head->buffer = pointer;
+	head->wp = head->rp = head->buffer = pointer;
+	head->size = size;
 
 	return 0;
 }
@@ -60,10 +70,7 @@ int buffer_init(struct buffer * head, size_t size){
 // allocate memory for buffer
 struct buffer * buffer(size_t size){
   struct buffer * head = kmalloc(sizeof(*head), GFP_KERNEL);
-  if(head) {
-		buffer_init(head,size);
-		if(!head->buffer) return NULL;
-	}
+	buffer_init(head,size);
   return head;
 }
 
@@ -75,27 +82,21 @@ int buffer_free(struct buffer * head){
 	return 0;
 }
 
-// return how much space we can write to. If read- and write-pointer is at same spot -> it means
-// the whole buffer can be written to. Else, calculate the write-space between them.
-size_t buffer_write_space(struct buffer * head){
-  if (head->rp == head->wp)
-    return head->size - 1;
-  return ((head->rp + head->size - head->wp) % head->size) - 1;
-}
-
-size_t buffer_write(struct buffer * buf, const char * seq, size_t size){
+size_t buffer_write(struct buffer * buf, char * seq, size_t size){
 	size_t new_size;
 	mutex_lock(&buf->mutex);
-	dprintf("(%lu).wp : %lu" , buf, buf->wp - buf->buffer);
+	dprintf("(%lu).wp : %lu" , (size_t)buf, (size_t)(buf->wp - buf->buffer));
 	if(buf->wp < buf->rp){
+		dprintf("");
 		new_size = min((size_t)(buf->wp - buf->rp) - 1, size);
-    copy_from_user(buf->wp,seq,new_size);
-    buf->wp += new_size;
+		dprintf("");
+		copy_from_user(buf->wp,seq,new_size);
+		dprintf("");
+		buf->wp += new_size;
 
 	}else{
 		const size_t a = (buf->buffer + buf->size) - buf->wp;
 		const size_t b = (buf->rp - buf->buffer) % buf->size;
-
 		new_size = min(a,size);
 		copy_from_user(buf->wp,seq,new_size);
 		size -= new_size;
@@ -106,14 +107,14 @@ size_t buffer_write(struct buffer * buf, const char * seq, size_t size){
 		}
 		buf->wp += new_size;
 	}
-	dprintf("-> %lu\n" , buf->wp - buf->buffer);
+	dprintf("-> %lu\n" , (size_t)(buf->wp - buf->buffer));
 	mutex_unlock (&buf->mutex);
 	return new_size;
 }
-size_t buffer_read(struct buffer * buf, const char * seq, size_t size){
+size_t buffer_read(struct buffer * buf, char * seq, size_t size){
 	size_t new_size = 0;
 	mutex_lock(&buf->mutex);
-	dprintf("(%lu).rp : %lu" , buf, buf->rp - buf->buffer);
+	dprintf("(%lu).rp : %lu" , (size_t)buf, (size_t)(buf->rp - buf->buffer));
 	if(buf->rp < buf->wp){
 		new_size = min((size_t)(buf->wp - buf->rp), size);
 		copy_to_user(seq,buf->rp,new_size);

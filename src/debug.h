@@ -7,6 +7,6 @@
   # define DEBUG_CODE(code) do {} while (0)
   #endif
   # define dprintf(...) DEBUG_CODE(printk("%s/%d : ",__FILE__,__LINE__);printk(__VA_ARGS__ );)
-  # define rerror(errno) ({dprintf("Error (%d) ",errno) ; errno;})
-  # define rerror(errno,...) ({dprintf("Error (%d) : ",errno) ; printk(KERN_CONT __VA_ARGS__ ); errno;})
+  # define rerror(errno) ({dprintf(KERN_ERR"Error (%d) ",errno) ; errno;})
+  # define rerror(errno,...) ({dprintf(KERN_ERR "Error (%d) : ",errno) ; printk(KERN_CONT __VA_ARGS__ ); errno;})
 #endif /* end of include guard: DM510_DEBUG_H */
