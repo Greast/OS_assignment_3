@@ -85,13 +85,10 @@ int buffer_free(struct buffer * head){
 size_t buffer_write(struct buffer * buf, char * seq, size_t size){
 	size_t new_size;
 	mutex_lock(&buf->mutex);
-	dprintf("(%lu).wp : %lu" , (size_t)buf, (size_t)(buf->wp - buf->buffer));
+	//dprintf("(%lu).wp : %lu" , (size_t)buf, (size_t)(buf->wp - buf->buffer));
 	if(buf->wp < buf->rp){
-		dprintf("");
 		new_size = min((size_t)(buf->wp - buf->rp) - 1, size);
-		dprintf("");
 		copy_from_user(buf->wp,seq,new_size);
-		dprintf("");
 		buf->wp += new_size;
 
 	}else{
@@ -107,14 +104,14 @@ size_t buffer_write(struct buffer * buf, char * seq, size_t size){
 		}
 		buf->wp += new_size;
 	}
-	dprintf("-> %lu\n" , (size_t)(buf->wp - buf->buffer));
+	//dprintf("-> %lu\n" , (size_t)(buf->wp - buf->buffer));
 	mutex_unlock (&buf->mutex);
 	return new_size;
 }
 size_t buffer_read(struct buffer * buf, char * seq, size_t size){
 	size_t new_size = 0;
 	mutex_lock(&buf->mutex);
-	dprintf("(%lu).rp : %lu" , (size_t)buf, (size_t)(buf->rp - buf->buffer));
+	//dprintf("(%lu).rp : %lu" , (size_t)buf, (size_t)(buf->rp - buf->buffer));
 	if(buf->rp < buf->wp){
 		new_size = min((size_t)(buf->wp - buf->rp), size);
 		copy_to_user(seq,buf->rp,new_size);
@@ -135,7 +132,7 @@ size_t buffer_read(struct buffer * buf, char * seq, size_t size){
 		buf->rp += new_size;
 
 	}
-	dprintf("-> %lu\n" , buf->rp - buf->buffer);
+	//dprintf("-> %lu\n" , buf->rp - buf->buffer);
 	mutex_unlock (&buf->mutex);
 	return new_size;
 }

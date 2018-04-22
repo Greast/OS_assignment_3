@@ -6,7 +6,7 @@
 #  define MODULE
 #endif
 
-#define DEBUG
+//#define DEBUG
 #include <linux/cdev.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -16,6 +16,7 @@
 
 //own header file for buffer, to make code readable
 #include "buffer.h"
+#include "dm510_ioctl_commands.h"
 
 static int dm510_open( struct inode*, struct file* );
 static int dm510_release( struct inode*, struct file* );
@@ -70,19 +71,20 @@ int dm510_init_module( void ) {
 	int i, result;
 	result = register_chrdev_region(global_device,DEVICE_COUNT,DEVICE_NAME);
 	if(result){
-		//printk(KERN_NOTICE "Unable to get device region, error %d\n", result);
-		return 0;
+		return rerror(result);
 	}
 	for (i = 0; i < BUFFER_COUNT; i++) {
 		result = buffer_init(buffers+i,BUFFER_DEFAULT_SIZE);
-		if(result < 0) return result;
+		if(result < 0) return rerror(result);
 	}
 	for ( i = 0; i < DEVICE_COUNT; i++) {
 		init_waitqueue_head(&devices[i].inq);
 		init_waitqueue_head(&devices[i].outq);
 		mutex_init(&devices[i].mutex);
+		dprintf("Device(%d) = (%lu,%lu)",i,buffers + (i % BUFFER_COUNT),buffers + ((i + 1) % BUFFER_COUNT));
 		devices[i].read_buffer = buffers + (i % BUFFER_COUNT);
 		devices[i].write_buffer = buffers + ((i + 1) % BUFFER_COUNT);
+		printk("");
 		frame_device_setup(devices+i, global_device+i );
 	}
 
@@ -154,21 +156,26 @@ static ssize_t dm510_read( struct file *filp,
     size_t count,   /* The max number of bytes to read  */
     loff_t *f_pos )  /* The offset in the file           */
 {
+	dprintf("Read.");
 	struct frame * dev = filp->private_data;
 	char **rp = &dev->read_buffer->rp;
-	char **wp = &dev->write_buffer->wp;
+	char **wp = &dev->read_buffer->wp;
 
 	if (mutex_lock_interruptible(&dev->mutex))
 		return rerror(-ERESTARTSYS);
+
+
 
 	while (*rp == *wp) {
 		mutex_unlock(&dev->mutex);
 		if (filp->f_flags & O_NONBLOCK){
 			return rerror(-EAGAIN);
 		}
+		dprintf("Read Sleeping.");
 		if(wait_event_interruptible(dev->inq,(*rp != *wp))){
 			return rerror(-EAGAIN);
 		}
+		dprintf("Reader Awoken.");
 		if(mutex_lock_interruptible(&dev->mutex)){
 			return rerror(-ERESTARTSYS);
 		}
@@ -176,6 +183,7 @@ static ssize_t dm510_read( struct file *filp,
 	count = buffer_read(dev->read_buffer,buf,count);
 	mutex_unlock (&dev->mutex);
 	wake_up_interruptible(&dev->outq);
+	dprintf("Read : Done.");
 	return count;
 }
 
@@ -185,7 +193,11 @@ static ssize_t dm510_write( struct file *filp,
     size_t count,   /* The max number of bytes to write */
     loff_t *f_pos )  /* The offset in the file           */
 {
+
 	struct frame * dev = filp->private_data;
+	dprintf("Write.| wp = %d, rp = %d" ,
+	dev->write_buffer->wp - dev->write_buffer->buffer,
+	dev->write_buffer->rp - dev->write_buffer->buffer);
 	if (mutex_lock_interruptible(&dev->mutex))
 		return rerror(-ERESTARTSYS);
 
@@ -210,17 +222,18 @@ static ssize_t dm510_write( struct file *filp,
 			return rerror(-ERESTARTSYS);
 	}
 	count = buffer_write(dev->write_buffer,(char*)buf,count);
-	if(dev->async_queue)
-		kill_fasync(&dev->async_queue, SIGIO, POLL_IN);
+	dprintf("Write : Waking Reader. | wp = %d, rp = %d" ,
+	dev->write_buffer->wp - dev->write_buffer->buffer,
+	dev->write_buffer->rp - dev->write_buffer->buffer);
+	int i;
+	for(i = 0 ; i < DEVICE_COUNT ; i++){
+			wake_up_interruptible(&devices[i].inq);
+	}
+
 	mutex_unlock (&dev->mutex);
+	dprintf("Write : Done.");
 	return count;
 }
-
-
-#define GET_BUFFER_SIZE 0
-#define SET_BUFFER_SIZE 1
-#define GET_MAX_NR_PROC 2
-#define SET_MAX_NR_PROC 3
 
 /* called by system call icotl */
 long dm510_ioctl(
@@ -252,10 +265,6 @@ long dm510_ioctl(
 		max_processes = arg;
 		break;
 	}
-
-
-	/* ioctl code belongs here */
-	//printk(KERN_INFO "DM510: ioctl called.\n");
 
 	return 0; //has to be changed
 }

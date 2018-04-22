@@ -1,0 +1,19 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include "dm510_ioctl_commands.h"
+int main(int argc, char const *argv[]) {
+  int write_pointer = open("/dev/dm510-0", O_RDWR);
+  const int size = ioctl(write_pointer, GET_BUFFER_SIZE);
+  char n = 0;
+  size_t i;
+  for (i = 0 ; i < size; i++) {
+    write(write_pointer,&n,sizeof(n));
+    n++;
+  }
+  write(write_pointer,&n,sizeof(n));
+  return 0;
+}

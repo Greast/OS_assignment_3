@@ -13,7 +13,7 @@ int main(int argc, char const *argv[]) {
 
   const char * hello  = "hello";
   write(dev1,hello,strlen(hello));
-
+  
   char world[20];
   ssize_t a = read(dev2,world,20);
 
