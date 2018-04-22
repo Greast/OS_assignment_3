@@ -126,7 +126,7 @@ static int dm510_open( struct inode *inode, struct file *filp ) {
 	if (filp->f_mode & FMODE_WRITE){
 		if(dev->nwriters >= 1){
 			mutex_unlock(&dev->mutex);
-			return rerror(-ERESTARTSYS);
+			return rerror(-ERESTARTSYS, "Amount of writers exceeded the allowed capacity of 1.");
 		}else{
 			dev->nwriters++;
 		}
@@ -165,23 +165,24 @@ static ssize_t dm510_read( struct file *filp,
 	char **rp = &dev->read_buffer->rp;
 	char **wp = &dev->read_buffer->wp;
 
-	if (mutex_lock_interruptible(&dev->mutex))
-		return rerror(-ERESTARTSYS);
+	if (mutex_lock_interruptible(&dev->mutex)){
+		return rerror(-ERESTARTSYS, "Mutex lock was interrupted by outside source.");
+	}
 
 
 
 	while (*rp == *wp) {
 		mutex_unlock(&dev->mutex);
 		if (filp->f_flags & O_NONBLOCK){
-			return rerror(-EAGAIN);
+			return rerror(-EAGAIN, ".");
 		}
 		dprintf("Read Sleeping.");
 		if(wait_event_interruptible(dev->inq,(*rp != *wp))){
-			return rerror(-EAGAIN);
+			return rerror(-EAGAIN, ".");
 		}
 		dprintf("Reader Awoken.");
 		if(mutex_lock_interruptible(&dev->mutex)){
-			return rerror(-ERESTARTSYS);
+			return rerror(-ERESTARTSYS, ".");
 		}
 	}
 	count = buffer_read(dev->read_buffer,buf,count);
