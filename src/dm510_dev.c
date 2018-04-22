@@ -70,11 +70,11 @@ int dm510_init_module( void ) {
 	int i, result;
 	result = register_chrdev_region(global_device,DEVICE_COUNT,DEVICE_NAME);
 	if(result){
-		return rerror(result, ".");
+		return rerror(result, "Failed to register chrdev_region.");
 	}
 	for (i = 0; i < BUFFER_COUNT; i++) {
-		result = buffer_init(buffers+i,BUFFER_DEFAULT_SIZE);
-		if(result < 0) return rerror(result, ".");
+		result = buffer_init(buffers+i, BUFFER_DEFAULT_SIZE);
+		if(result < 0) return rerror(result, "Could not allocate memory for buffer(%d).", i);
 	}
 	for ( i = 0; i < DEVICE_COUNT; i++) {
 		init_waitqueue_head(&devices[i].inq);
