@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
   char n = 0;
   size_t i;
   for (i = 0 ; i < size; i++) {
-    write(write_pointer,&n,sizeof(n));
+    write(write_pointer, &n ,sizeof(n));
     n++;
   }
   if(0 > write(write_pointer,&n,sizeof(n))){

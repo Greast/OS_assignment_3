@@ -15,8 +15,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define ITS 2
-
 void read_all(int fd, void *buf, int count) {
     while (count > 0) {
         int ret;
@@ -52,6 +50,10 @@ int main(int argc, char *argv[])
     int sum = 0, i;
     int val;
     int cnt;
+    int ITS;
+    
+    if(1 >= argc) return 0;
+    ITS = strtol(argv[1], NULL, 10);
 
     pid = fork();
 
