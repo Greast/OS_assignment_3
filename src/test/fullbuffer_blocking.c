@@ -15,6 +15,8 @@ int main(int argc, char const *argv[]) {
     write(write_pointer,&n,sizeof(n));
     n++;
   }
-  write(write_pointer,&n,sizeof(n));
+  if(0 > write(write_pointer,&n,sizeof(n))){
+    printf("Buffer is full\n");
+  }
   return 0;
 }

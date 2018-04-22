@@ -6,7 +6,7 @@
 #  define MODULE
 #endif
 
-#define DEBUG
+//#define DEBUG
 #include <linux/cdev.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -16,7 +16,7 @@
 
 //own header file for buffer, to make code readable
 #include "buffer.h"
-
+#include "dm510_ioctl_commands.h"
 static int dm510_open( struct inode*, struct file* );
 static int dm510_release( struct inode*, struct file* );
 static ssize_t dm510_read( struct file*, char*, size_t, loff_t* );
@@ -28,8 +28,6 @@ long dm510_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 #define MIN_MINOR_NUMBER 0
 #define MAX_MINOR_NUMBER 1
 
-#define DEVICE_COUNT 2
-#define BUFFER_COUNT 2
 /* end of what really should have been in a .h file */
 
 /* file operations struct */
@@ -64,7 +62,7 @@ static int frame_device_setup(struct frame * dev, dev_t device){
 	return cdev_add(&dev->cdev, device, 1);
 };
 
-#define BUFFER_DEFAULT_SIZE 2048
+#define BUFFER_DEFAULT_SIZE 4096
 
 int dm510_init_module( void ) {
 	int i, result;
@@ -83,6 +81,7 @@ int dm510_init_module( void ) {
 		dprintf("Device(%d) = (%d, %d)",i,(i % BUFFER_COUNT), ((i + 1) % BUFFER_COUNT));
 		devices[i].read_buffer = buffers + (i % BUFFER_COUNT);
 		devices[i].write_buffer = buffers + ((i + 1) % BUFFER_COUNT);
+		DEBUG_CODE(printk(""););
 		frame_device_setup(devices+i, global_device+i );
 	}
 
@@ -210,7 +209,7 @@ static ssize_t dm510_write( struct file *filp,
 		return rerror(-EMSGSIZE, "Message exceeded the size of the buffer.");
 	}
 
-	while (buffer_write_space(dev->write_buffer) < count) {
+	while (buffer_free_space(dev->write_buffer) < count) {
 		//DEFINE_WAIT(wait);
 
 		mutex_unlock(&dev->mutex);
@@ -218,7 +217,7 @@ static ssize_t dm510_write( struct file *filp,
 			return rerror(-EAGAIN, "File-pointer could not be blocked.");
 		}
 		if(wait_event_interruptible(dev->outq,
-			(buffer_write_space(dev->write_buffer) >= count))){
+			(buffer_free_space(dev->write_buffer) >= count))){
 			return rerror(-EAGAIN, "Writer was interrupted while sleeping.");
 		}
 
@@ -259,8 +258,9 @@ long dm510_ioctl(
 		case SET_BUFFER_SIZE:{
 			int i;
 			for(i = 0 ; i < BUFFER_COUNT ; i++){
-				if(buffer_write_space(buffers+i) < arg) {
-					return rerror(-EINVAL, "Buffer(%d) has %lu amount of free space, cannot be reduced to size %lu.", i, buffer_write_space(buffers+i), arg);
+				int used_space = buffers[i].size - buffer_free_space(buffers+i);
+				if(used_space > arg) {
+					return rerror(-EINVAL, "Buffer(%d) has %lu amount of used space, cannot be reduced to size %lu.", i, used_space, arg);
 				}
 			}
 			for(i = 0 ; i < BUFFER_COUNT ; i++) {
@@ -275,6 +275,12 @@ long dm510_ioctl(
 		case SET_MAX_NR_PROC:
 		max_processes = arg;
 		break;
+
+		case GET_BUFFER_FREE_SPACE:
+		return buffer_free_space(buffers+arg);
+
+		case GET_BUFFER_USED_SPACE:
+		return buffers[arg].size - buffer_free_space(buffers+arg);
 	}
 
 

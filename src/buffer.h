@@ -14,7 +14,7 @@ struct buffer{
 
 // return how much space we can write to. If read- and write-pointer is at same spot -> it means
 // the whole buffer can be written to. Else, calculate the write-space between them.
-size_t buffer_write_space(struct buffer * head){
+size_t buffer_free_space(struct buffer * head){
   if (head->rp == head->wp)
     return head->size - 1;
   return ((head->rp + head->size - head->wp) % head->size) - 1;
@@ -24,7 +24,6 @@ size_t buffer_write_space(struct buffer * head){
 int buffer_resize(struct buffer * head, size_t size){
 	void * pointer;
 	mutex_lock(&head->mutex);
-	DEBUG_CODE(if(buffer_write_space(head) < size) return rerror(-EINVAL););
 
 	pointer = kmalloc(size*sizeof(*head->buffer),GFP_KERNEL);
 

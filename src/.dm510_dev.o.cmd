@@ -627,6 +627,7 @@ deps_/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o := \
   include/linux/vmalloc.h \
   include/linux/kasan.h \
   /home/simjo16/Documents/OS_assignment_3/src/debug.h \
+  /home/simjo16/Documents/OS_assignment_3/src/dm510_ioctl_commands.h \
 
 /home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o: $(deps_/home/simjo16/Documents/OS_assignment_3/src/dm510_dev.o)
 
